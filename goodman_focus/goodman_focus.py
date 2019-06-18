@@ -57,6 +57,8 @@ formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
 
 logging.config.dictConfig(LOGGING)
 
+log = logging.getLogger(__name__)
+
 
 def get_args(arguments=None):
     parser = argparse.ArgumentParser(
@@ -105,6 +107,70 @@ def get_args(arguments=None):
         parser.error("There are no files matching \"{}\" in the folder \"{}\"".format(args.file_pattern, args.data_path))
 
     return args
+
+
+def get_peaks(ccd, file_name='', plots=False):
+    width, length = ccd.data.shape
+
+    low_limit = int(width / 2 - 50)
+    high_limit = int(width / 2 + 50)
+
+    raw_profile = np.median(ccd.data[low_limit:high_limit, :], axis=0)
+    x_axis = np.array(range(len(raw_profile)))
+
+    clipped_profile = sigma_clip(raw_profile, sigma=1, iters=5)
+
+    _mean = np.mean(clipped_profile)
+
+    clipped_x_axis = [i for i in range(len(clipped_profile)) if not clipped_profile.mask[i]]
+    cleaned_profile = clipped_profile[~clipped_profile.mask]
+
+    background_model = models.Linear1D(slope=0,
+                                       intercept=np.mean(clipped_profile))
+
+    fitter = fitting.SimplexLSQFitter()
+
+    fitted_background = fitter(background_model,
+                                           clipped_x_axis,
+                                           cleaned_profile)
+
+    profile = raw_profile - np.array(fitted_background(x_axis))
+
+    filtered_data = np.where(
+        np.abs(profile > profile.min() + 0.03 * profile.max()), profile,
+        None)
+    filtered_data = np.array(
+        [0 if it is None else it for it in filtered_data])
+
+    peaks = signal.argrelmax(filtered_data, axis=0, order=5)[0]
+
+
+    if len(peaks) == 1:
+        log.debug("Found {} peak in file".format(len(peaks)))
+    else:
+        log.debug("Found {} peaks in file".format(len(peaks)))
+
+    values = [profile[int(index)] for index in peaks]
+
+    if plots:
+        plt.title("{} {}".format(file_name, np.mean(clipped_profile)))
+        plt.axhline(0, color='k')
+        plt.plot(x_axis, raw_profile, label='Raw Profile')
+        plt.plot(x_axis, clipped_profile)
+        plt.plot(x_axis, background_model(x_axis),
+                 label='Background Level')
+        plt.plot(x_axis, fitted_background(x_axis), label='Background Level')
+        # plt.plot(x_axis, profile, label='Background Subtracted Profile')
+        # plt.plot(x_axis, filtered_data, label="Filtered Data")
+        # for _peak in peaks:
+        #     plt.axvline(_peak, color='k', alpha=0.6)
+        plt.legend(loc='best')
+        plt.show()
+
+    return peaks, x_axis, values
+
+
+
 
 
 class GetFocus(object):
@@ -235,7 +301,11 @@ class GetFocus(object):
             self.log.debug("Processing file: {}".format(self.file_name))
             self.__ccd = CCDData.read(os.path.join(self.full_path, self.file_name), unit='adu')
 
-            self._get_peaks()
+            self.peaks, self.__x_axis, self.values = get_peaks(
+                ccd=self.__ccd,
+                file_name=self.file_name,
+                plots=self.args.debug)
+
             self._get_fwhm()
 
             self.log.info("File: {} Focus: {} FWHM: {}"
@@ -271,61 +341,7 @@ class GetFocus(object):
                      self.polynomial(new_x_axis), label='Model')
             plt.show()
 
-    def _get_peaks(self):
-        width, length = self.__ccd.data.shape
 
-        low_limit = int(width / 2 - 50)
-        high_limit = int(width / 2 + 50)
-
-        raw_profile = np.median(self.__ccd.data[low_limit:high_limit, :], axis=0)
-        self.__x_axis = np.array(range(len(raw_profile)))
-
-        clipped_profile = sigma_clip(raw_profile, sigma=1, iters=5)
-
-        _mean = np.mean(clipped_profile)
-
-        clipped_x_axis = [i for i in range(len(clipped_profile)) if not clipped_profile.mask[i]]
-        cleaned_profile = clipped_profile[~clipped_profile.mask]
-
-        background_model = models.Linear1D(slope=0,
-                                           intercept=np.mean(clipped_profile))
-
-        fitted_background = self.linear_fitter(background_model,
-                                               clipped_x_axis,
-                                               cleaned_profile)
-
-        self.__profile = raw_profile - np.array(fitted_background(self.__x_axis))
-
-        filtered_data = np.where(
-            np.abs(self.__profile > self.__profile.min() + 0.03 * self.__profile.max()), self.__profile,
-            None)
-        filtered_data = np.array(
-            [0 if it is None else it for it in filtered_data])
-
-        self.peaks = signal.argrelmax(filtered_data, axis=0, order=5)[0]
-
-
-        if len(self.peaks) == 1:
-            self.log.debug("Found {} peak in file".format(len(self.peaks)))
-        else:
-            self.log.debug("Found {} peaks in file".format(len(self.peaks)))
-
-        self.values = [self.__profile[int(index)] for index in self.peaks]
-
-        if False:
-            plt.title("{} {}".format(self.file_name, np.mean(clipped_profile)))
-            plt.axhline(0, color='k')
-            plt.plot(self.__x_axis, raw_profile, label='Raw Profile')
-            plt.plot(self.__x_axis, clipped_profile)
-            plt.plot(self.__x_axis, background_model(self.__x_axis),
-                     label='Background Level')
-            plt.plot(self.__x_axis, fitted_background(self.__x_axis), label='Background Level')
-            # plt.plot(self.__x_axis, self.__profile, label='Background Subtracted Profile')
-            # plt.plot(self.__x_axis, filtered_data, label="Filtered Data")
-            # for _peak in self.peaks:
-            #     plt.axvline(_peak, color='k', alpha=0.6)
-            plt.legend(loc='best')
-            plt.show()
 
     def _set_model(self, peak_index):
         if self.feature_model.__class__.name == 'Gaussian1D':
