@@ -131,8 +131,8 @@ def get_peaks(ccd, file_name='', plots=False):
     fitter = fitting.SimplexLSQFitter()
 
     fitted_background = fitter(background_model,
-                                           clipped_x_axis,
-                                           cleaned_profile)
+                               clipped_x_axis,
+                               cleaned_profile)
 
     profile = raw_profile - np.array(fitted_background(x_axis))
 
@@ -167,10 +167,71 @@ def get_peaks(ccd, file_name='', plots=False):
         plt.legend(loc='best')
         plt.show()
 
-    return peaks, x_axis, values
+    return peaks, values, x_axis, profile
 
 
+def get_fwhm(peaks, values, x_axis, profile, model):
+    
+    fitter = fitting.LevMarLSQFitter()
+    all_fwhm = []
+    for peak_index in range(len(peaks)):
+        if model.__class__.name == 'Gaussian1D':
+            model.amplitude.value = values[peak_index]
+            model.mean.value = peaks[peak_index]
+            # TODO (simon): stddev should be estimated based on binning and slit size
+            model.stddev.value = 5
+            log.debug(
+                "Fitting {} with amplitude={}, mean={}, stddev={}".format(
+                    model.__class__.name,
+                    model.amplitude.value,
+                    model.mean.value,
+                    model.stddev.value))
 
+        elif model.__class__.name == 'Moffat1D':
+            model.amplitude.value = values[peak_index]
+            model.x_0.value = peaks[peak_index]
+            log.debug(
+                "Fitting {} with amplitude={}, x_0={}".format(
+                    model.__class__.name,
+                    model.amplitude.value,
+                    model.x_0.value))
+
+        model = fitter(model,
+                       x_axis,
+                       profile)
+
+        if not np.isnan(model.fwhm):
+            all_fwhm.append(model.fwhm)
+
+    if len(all_fwhm) == 1:
+        log.info("Returning single FWHM value: {}".format(all_fwhm[0]))
+        return all_fwhm[0]
+    else:
+        log.info("Applying sigma clipping to collected FWHM values."
+                 " SIGMA: 3, ITERATIONS: 1")
+        clipped_fwhm = sigma_clip(all_fwhm, sigma=3, iters=1)
+
+        if np.ma.is_masked(clipped_fwhm):
+            cleaned_fwhm = clipped_fwhm[~clipped_fwhm.mask]
+            removed_fwhm = clipped_fwhm[clipped_fwhm.mask]
+            log.info("Discarded {} FWHM values".format(len(removed_fwhm)))
+            for _value in removed_fwhm.data:
+                log.debug("FWHM {} discarded".format(_value))
+        else:
+            log.debug("No FWHM value was discarded.")
+            cleaned_fwhm = clipped_fwhm
+
+        if len(cleaned_fwhm) > 0:
+            log.debug("Remaining FWHM values: {}".format(len(cleaned_fwhm)))
+            for _value in cleaned_fwhm:
+                log.debug("FWHM value: {}".format(_value))
+            mean_fwhm = np.mean(cleaned_fwhm)
+            log.debug("Mean FWHM value {}".format(mean_fwhm))
+            return mean_fwhm
+        else:
+            log.error("Unable to obtain usable FWHM value")
+            log.debug("Returning FWHM None")
+            return None
 
 
 class GetFocus(object):
@@ -206,7 +267,7 @@ class GetFocus(object):
         self.__ccd = None
         self.file_name = None
         self.__best_focus = None
-        self.__x_axis = None
+        self.x_axis = None
         self.__mean_fwhm = None
 
         self.polynomial = models.Polynomial1D(degree=5)
@@ -250,18 +311,7 @@ class GetFocus(object):
 
     @property
     def fwhm(self):
-        if self.__mean_fwhm is None:
-            return self.feature_model.fwhm
-        else:
-            return self.__mean_fwhm
-
-    # @property
-    # def focus(self):
-    #     return self.__best_focus
-    #
-    # @property.setter
-    # def focus(self):
-    #     pass
+        return self.__mean_fwhm
 
     def __call__(self, *args, **kwargs):
         for focus_group in self.focus_groups:
@@ -301,12 +351,16 @@ class GetFocus(object):
             self.log.debug("Processing file: {}".format(self.file_name))
             self.__ccd = CCDData.read(os.path.join(self.full_path, self.file_name), unit='adu')
 
-            self.peaks, self.__x_axis, self.values = get_peaks(
+            self.peaks, self.values, self.x_axis,  self.profile = get_peaks(
                 ccd=self.__ccd,
                 file_name=self.file_name,
                 plots=self.args.debug)
 
-            self._get_fwhm()
+            self.__mean_fwhm = get_fwhm(peaks=self.peaks, 
+                                        values=self.values, 
+                                        x_axis=self.x_axis, 
+                                        profile=self.profile, 
+                                        model=self.feature_model)
 
             self.log.info("File: {} Focus: {} FWHM: {}"
                           "".format(self.file_name,
@@ -341,92 +395,6 @@ class GetFocus(object):
                      self.polynomial(new_x_axis), label='Model')
             plt.show()
 
-
-
-    def _set_model(self, peak_index):
-        if self.feature_model.__class__.name == 'Gaussian1D':
-            self.feature_model.amplitude.value = self.values[peak_index]
-            self.feature_model.mean.value = self.peaks[peak_index]
-            # TODO (simon): stddev should be calculated based on binning and slit size
-            self.feature_model.stddev.value = 5
-
-            self.log.debug(
-                "Fitting {} with amplitude={}, mean={}, stddev={}".format(
-                    self.feature_model.__class__.name,
-                    self.feature_model.amplitude.value,
-                    self.feature_model.mean.value,
-                    self.feature_model.stddev.value))
-
-        elif self.feature_model.__class__.name == 'Moffat1D':
-            self.feature_model.amplitude.value = self.values[peak_index]
-            self.feature_model.x_0.value = self.peaks[peak_index]
-            self.log.debug(
-                "Fitting {} with amplitude={}, x_0={}".format(
-                    self.feature_model.__class__.name,
-                    self.feature_model.amplitude.value,
-                    self.feature_model.x_0.value))
-
-    def _get_fwhm(self):
-
-        if len(self.peaks) == 1:
-            self._set_model(peak_index=0)
-            self.feature_model = self.fitter(self.feature_model,
-                                             self.__x_axis,
-                                             self.__profile)
-            if False:
-                plt.plot(self.__x_axis, self.feature_model(self.__x_axis), color='r')
-                plt.plot(self.__x_axis, self.__profile, color='b')
-                plt.title(self.feature_model.fwhm)
-                plt.xlim(2050, 2090)
-                plt.show()
-
-            return self.feature_model.fwhm
-
-        else:
-            all_fwhm = []
-            self.__mean_fwhm = None
-            for i in range(len(self.peaks)):
-                self._set_model(peak_index=i)
-
-                self.feature_model = self.fitter(self.feature_model,
-                                                 self.__x_axis,
-                                                 self.__profile)
-                if False:
-                    plt.plot(self.__x_axis, self.feature_model(self.__x_axis),
-                             color='r')
-                    plt.plot(self.__x_axis, self.__profile, color='b')
-                    plt.title("FWHM: {}".format(self.feature_model.fwhm))
-                    plt.xlim(self.peaks[i]-30, self.peaks[i] + 30)
-                    plt.axvline(self.peaks[i], color='k')
-                    plt.show()
-                if not np.isnan(self.feature_model.fwhm):
-                    all_fwhm.append(self.feature_model.fwhm)
-
-            self.log.info("Applying sigma clipping to collected FWHM values."
-                          " SIGMA: 3, ITERATIONS: 1")
-            clipped_fwhm = sigma_clip(all_fwhm, sigma=3, iters=1)
-
-            if np.ma.is_masked(clipped_fwhm):
-                cleaned_fwhm = clipped_fwhm[~clipped_fwhm.mask]
-                removed_fwhm = clipped_fwhm[clipped_fwhm.mask]
-                self.log.info("Discarded {} FWHM values".format(len(removed_fwhm)))
-                for _value in removed_fwhm.data:
-                    self.log.debug("FWHM {} discarded".format(_value))
-            else:
-                self.log.debug("No FWHM value was discarded.")
-                cleaned_fwhm = clipped_fwhm
-
-            if len(cleaned_fwhm) > 0:
-                self.log.debug("Remaining FWHM values: {}".format(len(cleaned_fwhm)))
-                for _value in cleaned_fwhm:
-                    self.log.debug("FWHM value: {}".format(_value))
-                self.__mean_fwhm = np.mean(cleaned_fwhm)
-                self.log.debug("Mean FWHM value {}".format(self.__mean_fwhm))
-                return
-            else:
-                self.log.error("Unable to obtain usable FWHM value")
-                self.log.debug("Returning FWHM None")
-                return None
 
 
 if __name__ == '__main__':
