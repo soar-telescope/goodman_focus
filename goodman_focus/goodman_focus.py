@@ -110,6 +110,26 @@ def get_args(arguments=None):
 
 
 def get_peaks(ccd, file_name='', plots=False):
+    """Identify peaks in an image
+
+    For Imaging and Spectroscopy the images obtained for focusing have lines
+    that in the first case is an image of the slit and for the second is the
+    spectrum of lamp, strategically selected for a good coverage of lines across
+    the detector.
+
+    Args:
+        ccd (object): Image to get peaks from
+        file_name (str): Name of the file used. This is optional and is used
+        only for debugging purposes.
+        plots (bool): Show plots of the profile, background and
+        background-subtracted profile
+
+    Returns:
+        A list of peak values, peak intensities as well as the x-axis and the
+        background subtracted spectral profile. For Imaging is the same axis as
+        the spectral axis.
+
+    """
     width, length = ccd.data.shape
 
     low_limit = int(width / 2 - 50)
