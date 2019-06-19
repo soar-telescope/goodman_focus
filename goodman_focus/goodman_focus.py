@@ -170,7 +170,7 @@ def get_peaks(ccd, file_name='', plots=False):
     else:
         log.debug("Found {} peaks in file".format(len(peaks)))
 
-    values = [profile[int(index)] for index in peaks]
+    values = np.array([profile[int(index)] for index in peaks])
 
     if plots:
         plt.title("{} {}".format(file_name, np.mean(clipped_profile)))
@@ -191,7 +191,31 @@ def get_peaks(ccd, file_name='', plots=False):
 
 
 def get_fwhm(peaks, values, x_axis, profile, model):
-    
+    """Finds FWHM for an image by fitting a model
+
+    For Imaging there is only one peak (the slit itself) but for spectroscopy
+    there are many. In that case a 3-sigma clipping 1-iteration is applied to
+    clean the values and then the mean is returned. In case that a FWHM can't be
+    obtained a `None` value is returned.
+
+    This function allows the use of `Gaussian1D` and `Moffat1D` models to be
+    fitted to each line. `Gaussian1D` produces more consistent results though
+    `Moffat1D` usually fits better the whole line profile.
+
+    Args:
+        peaks (numpy.ndarray): An array of peaks present in the profile.
+        values (numpy.ndarray): An array of values at peak location.
+        x_axis (numpy.ndarray): X-axis for the profile, usually is equivalent to
+        `range(len(profile))`.
+        profile (numpy.ndarray): 1-dimensional profile of the image being
+         analyzed.
+        model (Model): A model to fit to each peak location. `Gaussian1D` and
+        `Moffat1D` are supported.
+
+    Returns:
+        The FWHM, mean FWHM or `None`.
+
+    """
     fitter = fitting.LevMarLSQFitter()
     all_fwhm = []
     for peak_index in range(len(peaks)):
