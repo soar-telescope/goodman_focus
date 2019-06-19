@@ -1,0 +1,15 @@
+name: goodman_focus
+channels:
+  - astroconda
+dependencies:
+  - numpy
+  - pandas
+  - matplotlib
+  - scipy
+  - astropy
+  - pip
+  - pip:
+      - ccdproc
+      - coveralls
+      - sphinx
+      - sphinxcontrib.napoleon
