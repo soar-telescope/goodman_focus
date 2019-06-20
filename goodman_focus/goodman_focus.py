@@ -278,7 +278,7 @@ def get_fwhm(peaks, values, x_axis, profile, model):
             return None
 
 
-class GetFocus(object):
+class GoodmanFocus(object):
 
     keywords = ['INSTCONF',
                 'FOCUS',
@@ -366,7 +366,22 @@ class GetFocus(object):
         for focus_group in self.focus_groups:
             # print(focus_group)
 
-            self.find_best_focus(group=focus_group, plots=True)
+            focus_dataframe = self.get_focus_data(group=focus_group)
+
+            self._fit(df=focus_dataframe)
+            self.log.info("Best Focus for {} is {}".format(self.file_name,
+                                                           self.__best_focus))
+            if True:
+                # TODO (simon): Do properly using matplotlib or pandas alone
+                # fig = plt.subplots()
+                focus_dataframe.plot(x='focus', y='fwhm', marker='x')
+                plt.axvline(self.__best_focus)
+                plt.title("Best Focus: {}".format(self.__best_focus))
+                focus_list = focus_dataframe['focus'].tolist()
+                new_x_axis = np.linspace(focus_list[0], focus_list[-1], 1000)
+                plt.plot(new_x_axis,
+                         self.polynomial(new_x_axis), label='Model')
+                plt.show()
 
 
 

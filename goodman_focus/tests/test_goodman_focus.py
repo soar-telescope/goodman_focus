@@ -6,6 +6,7 @@ from astropy.modeling import models
 from unittest import TestCase, skip
 from ccdproc import CCDData
 
+from ..goodman_focus import GoodmanFocus
 from ..goodman_focus import get_peaks, get_fwhm
 
 import matplotlib.pyplot as plt
