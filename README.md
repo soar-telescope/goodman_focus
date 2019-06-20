@@ -7,5 +7,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/soar-telescope/goodman_focus/badge.svg?branch=master)](https://coveralls.io/github/soar-telescope/goodman_focus?branch=master)
 
 
+Finds the best focus for one or more focus sequences.
 
-get the focus of images and spectra
+## Note
+
+Entry points not configured yet.
