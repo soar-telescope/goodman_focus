@@ -80,7 +80,7 @@ class GetPeaksTest(TestCase):
         # we allow some peaks to be missed since we are not concerned about all
         # of them
         self.assertLessEqual(len(peaks), number_of_peaks)
-        self.assertAlmostEqual(mean_fwhm, np.mean(set_fwhms), delta=0.01)
+        self.assertAlmostEqual(mean_fwhm, np.mean(set_fwhms), delta=0.1)
 
 
 class GoodmanFocusTests(TestCase):
@@ -94,10 +94,13 @@ class GoodmanFocusTests(TestCase):
         number_of_test_subjects = 21
         self.file_list = ["file_{}.fits".format(i+1) for i in range(number_of_test_subjects)]
         self.focus_values = list(np.linspace(-2000, 2000, number_of_test_subjects))
-        fwhm_model = models.Polynomial1D(degree=2)
+        fwhm_model = models.Polynomial1D(degree=5)
         fwhm_model.c0.value = 5
         fwhm_model.c1.value = 1e-6
         fwhm_model.c2.value = 1e-6
+        # fwhm_model.c3.value = 1e-6
+        # fwhm_model.c4.value = 1e-6
+        # fwhm_model.c5.value = 1e-6
 
         self.list_of_fwhm = fwhm_model(self.focus_values)
 
@@ -128,16 +131,37 @@ class GoodmanFocusTests(TestCase):
 
             ccd.write(self.file_list[i], overwrite=True)
 
-        self.df = pandas.DataFrame(self.file_list, columns=['file'])
+        self.focus_group = pandas.DataFrame(self.file_list, columns=['file'])
+
+        focus_data = []
+        for i in range(number_of_test_subjects):
+            row_data = [self.file_list[i],
+                        self.list_of_fwhm[i],
+                        self.focus_values[i]]
+            focus_data.append(row_data)
+        self.focus_data_frame = pandas.DataFrame(
+            focus_data,
+            columns=['file', 'fwhm', 'focus'])
+
         self.goodman_focus = GoodmanFocus(arguments=arguments)
 
     def test_get_focus_data(self):
 
-        result = self.goodman_focus.get_focus_data(group=self.df)
+        result = self.goodman_focus.get_focus_data(group=self.focus_group)
 
         self.assertIsInstance(result, pandas.DataFrame)
         np.testing.assert_array_almost_equal(np.array(result['fwhm'].tolist()),
                                              self.list_of_fwhm)
+
+    def test__fit(self):
+        result = self.goodman_focus._fit(df=self.focus_data_frame)
+
+
+        self.assertIsInstance(result, models.Polynomial1D)
+
+    def test__call__(self):
+        self.goodman_focus()
+        self.assertIsNotNone(self.goodman_focus.fwhm)
 
     def tearDown(self):
         for _file in self.file_list:

@@ -394,7 +394,6 @@ class GoodmanFocus(object):
         min_focus = np.min(focus)
         self.polynomial = self.fitter(self.polynomial, focus, fwhm)
         self._get_local_minimum(x1=min_focus, x2=max_focus)
-        print(self.polynomial)
         return self.polynomial
 
     def _get_local_minimum(self, x1, x2):
