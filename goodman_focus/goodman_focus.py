@@ -110,6 +110,26 @@ def get_args(arguments=None):
 
 
 def get_peaks(ccd, file_name='', plots=False):
+    """Identify peaks in an image
+
+    For Imaging and Spectroscopy the images obtained for focusing have lines
+    that in the first case is an image of the slit and for the second is the
+    spectrum of lamp, strategically selected for a good coverage of lines across
+    the detector.
+
+    Args:
+        ccd (object): Image to get peaks from
+        file_name (str): Name of the file used. This is optional and is used
+        only for debugging purposes.
+        plots (bool): Show plots of the profile, background and
+        background-subtracted profile
+
+    Returns:
+        A list of peak values, peak intensities as well as the x-axis and the
+        background subtracted spectral profile. For Imaging is the same axis as
+        the spectral axis.
+
+    """
     width, length = ccd.data.shape
 
     low_limit = int(width / 2 - 50)
@@ -150,7 +170,7 @@ def get_peaks(ccd, file_name='', plots=False):
     else:
         log.debug("Found {} peaks in file".format(len(peaks)))
 
-    values = [profile[int(index)] for index in peaks]
+    values = np.array([profile[int(index)] for index in peaks])
 
     if plots:
         plt.title("{} {}".format(file_name, np.mean(clipped_profile)))
@@ -171,7 +191,31 @@ def get_peaks(ccd, file_name='', plots=False):
 
 
 def get_fwhm(peaks, values, x_axis, profile, model):
-    
+    """Finds FWHM for an image by fitting a model
+
+    For Imaging there is only one peak (the slit itself) but for spectroscopy
+    there are many. In that case a 3-sigma clipping 1-iteration is applied to
+    clean the values and then the mean is returned. In case that a FWHM can't be
+    obtained a `None` value is returned.
+
+    This function allows the use of `Gaussian1D` and `Moffat1D` models to be
+    fitted to each line. `Gaussian1D` produces more consistent results though
+    `Moffat1D` usually fits better the whole line profile.
+
+    Args:
+        peaks (numpy.ndarray): An array of peaks present in the profile.
+        values (numpy.ndarray): An array of values at peak location.
+        x_axis (numpy.ndarray): X-axis for the profile, usually is equivalent to
+        `range(len(profile))`.
+        profile (numpy.ndarray): 1-dimensional profile of the image being
+         analyzed.
+        model (Model): A model to fit to each peak location. `Gaussian1D` and
+        `Moffat1D` are supported.
+
+    Returns:
+        The FWHM, mean FWHM or `None`.
+
+    """
     fitter = fitting.LevMarLSQFitter()
     all_fwhm = []
     for peak_index in range(len(peaks)):
@@ -234,7 +278,7 @@ def get_fwhm(peaks, values, x_axis, profile, model):
             return None
 
 
-class GetFocus(object):
+class GoodmanFocus(object):
 
     keywords = ['INSTCONF',
                 'FOCUS',
@@ -267,8 +311,7 @@ class GetFocus(object):
         self.__ccd = None
         self.file_name = None
         self.__best_focus = None
-        self.x_axis = None
-        self.__mean_fwhm = None
+        self._fwhm = None
 
         self.polynomial = models.Polynomial1D(degree=5)
         self.fitter = fitting.LevMarLSQFitter()
@@ -311,15 +354,36 @@ class GetFocus(object):
 
     @property
     def fwhm(self):
-        return self.__mean_fwhm
+        return self._fwhm
+
+    @fwhm.setter
+    def fwhm(self, value):
+        if value is not None:
+            self._fwhm = value
+
 
     def __call__(self, *args, **kwargs):
         for focus_group in self.focus_groups:
             # print(focus_group)
 
-            self.find_best_focus(group=focus_group, plots=True)
+            focus_dataframe = self.get_focus_data(group=focus_group)
 
-        # print(self.ifc.to_string())
+            self._fit(df=focus_dataframe)
+            self.log.info("Best Focus for {} is {}".format(self.file_name,
+                                                           self.__best_focus))
+            if True:
+                # TODO (simon): Do properly using matplotlib or pandas alone
+                # fig = plt.subplots()
+                focus_dataframe.plot(x='focus', y='fwhm', marker='x')
+                plt.axvline(self.__best_focus)
+                plt.title("Best Focus: {}".format(self.__best_focus))
+                focus_list = focus_dataframe['focus'].tolist()
+                new_x_axis = np.linspace(focus_list[0], focus_list[-1], 1000)
+                plt.plot(new_x_axis,
+                         self.polynomial(new_x_axis), label='Model')
+                plt.show()
+
+
 
 
     def _fit(self, df):
@@ -330,7 +394,6 @@ class GetFocus(object):
         min_focus = np.min(focus)
         self.polynomial = self.fitter(self.polynomial, focus, fwhm)
         self._get_local_minimum(x1=min_focus, x2=max_focus)
-        # print(self.polynomial)
         return self.polynomial
 
     def _get_local_minimum(self, x1, x2):
@@ -344,23 +407,38 @@ class GetFocus(object):
 
         return self.__best_focus
 
-    def find_best_focus(self, group, plots=False):
+    def get_focus_data(self, group):
+        """Collects all the relevant data for finding best focus
 
+        It is important that the data is not very contaminated because there is
+        no built-in cleaning process.
+
+
+        Args:
+            group (DataFrame): The `group` refers to a set of images obtained
+            most likely in series and with the same configuration.
+
+        Returns:
+            a `pandas.DataFrame` with three columns. `file`, `fwhm` and `focus`.
+
+        """
         focus_data = []
         for self.file_name in group.file.tolist():
             self.log.debug("Processing file: {}".format(self.file_name))
-            self.__ccd = CCDData.read(os.path.join(self.full_path, self.file_name), unit='adu')
+            self.__ccd = CCDData.read(os.path.join(self.full_path,
+                                                   self.file_name),
+                                      unit='adu')
 
-            self.peaks, self.values, self.x_axis,  self.profile = get_peaks(
+            peaks, values, x_axis,  profile = get_peaks(
                 ccd=self.__ccd,
                 file_name=self.file_name,
                 plots=self.args.debug)
 
-            self.__mean_fwhm = get_fwhm(peaks=self.peaks, 
-                                        values=self.values, 
-                                        x_axis=self.x_axis, 
-                                        profile=self.profile, 
-                                        model=self.feature_model)
+            self.fwhm = get_fwhm(peaks=peaks,
+                                 values=values,
+                                 x_axis=x_axis,
+                                 profile=profile,
+                                 model=self.feature_model)
 
             self.log.info("File: {} Focus: {} FWHM: {}"
                           "".format(self.file_name,
@@ -374,31 +452,18 @@ class GetFocus(object):
                                            self.fwhm,
                                            self.__ccd.header['CAM_FOC']))
 
-        fdf = pandas.DataFrame(focus_data, columns=['file', 'fwhm', 'focus'])
-        sorted = fdf.sort_values(by='focus')
-        averaged = sorted.copy()
-        averaged.pop('file')
-        average = averaged
+        focus_data_frame = pandas.DataFrame(
+            focus_data,
+            columns=['file', 'fwhm', 'focus']).sort_values(by='focus')
 
-        # print(average)
-        self._fit(df=average)
-        self.log.info("Best Focus for {} is {}".format(self.file_name, self.__best_focus))
-        if plots:
-            # TODO (simon): Do properly using matplotlib or pandas alone
-            # fig = plt.subplots()
-            average.plot(x='focus', y='fwhm', marker='x')
-            plt.axvline(self.__best_focus)
-            plt.title("Best Focus: {}".format(self.__best_focus))
-            focus_list = average['focus'].tolist()
-            new_x_axis = np.linspace(focus_list[0], focus_list[-1], 1000)
-            plt.plot(new_x_axis,
-                     self.polynomial(new_x_axis), label='Model')
-            plt.show()
+        return focus_data_frame
+
+
 
 
 
 if __name__ == '__main__':
     # full_path = '/user/simon/data/soar/work/focus2'
-    get_focus = GetFocus()
+    get_focus = GoodmanFocus()
     get_focus()
 

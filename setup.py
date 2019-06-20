@@ -14,6 +14,18 @@ CONF = ConfigParser()
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+
+def create_version_py(packagename, version, source_dir='.'):
+    package_dir = os.path.join(source_dir, packagename)
+    version_py = os.path.join(package_dir, 'version.py')
+
+    version_str = "# This is an automatic generated file please do not edit\n" \
+                  "__version__ = '{:s}'".format(version)
+
+    with open(version_py, 'w') as f:
+        f.write(version_str)
+
+
 # read content from README.md
 with open(os.path.join(HERE, 'README.md')) as f:
     long_description = f.read()
@@ -39,7 +51,7 @@ AUTHOR = metadata['author']
 AUTHOR_EMAIL = metadata['author_email']
 
 # freezes version information in version.py
-# create_version_py(PACKAGENAME, VERSION)
+create_version_py(PACKAGENAME, VERSION)
 
 
 cmdclassd = {'build_sphinx': BuildDoc,

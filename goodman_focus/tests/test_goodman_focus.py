@@ -1,11 +1,14 @@
 import numpy as np
 import logging
+import pandas
+import os
 
 from astropy.io import fits
 from astropy.modeling import models
 from unittest import TestCase, skip
 from ccdproc import CCDData
 
+from ..goodman_focus import GoodmanFocus
 from ..goodman_focus import get_peaks, get_fwhm
 
 import matplotlib.pyplot as plt
@@ -77,4 +80,89 @@ class GetPeaksTest(TestCase):
         # we allow some peaks to be missed since we are not concerned about all
         # of them
         self.assertLessEqual(len(peaks), number_of_peaks)
-        self.assertAlmostEqual(mean_fwhm, np.mean(set_fwhms), delta=0.01)
+        self.assertAlmostEqual(mean_fwhm, np.mean(set_fwhms), delta=0.1)
+
+
+class GoodmanFocusTests(TestCase):
+
+    def setUp(self):
+        arguments = ['--data-path', os.getcwd(),
+                     '--file-pattern', '*.fits',
+                     '--obstype', 'FOCUS',
+                     '--features-model', 'gaussian']
+
+        number_of_test_subjects = 21
+        self.file_list = ["file_{}.fits".format(i+1) for i in range(number_of_test_subjects)]
+        self.focus_values = list(np.linspace(-2000, 2000, number_of_test_subjects))
+        fwhm_model = models.Polynomial1D(degree=5)
+        fwhm_model.c0.value = 5
+        fwhm_model.c1.value = 1e-6
+        fwhm_model.c2.value = 1e-6
+        # fwhm_model.c3.value = 1e-6
+        # fwhm_model.c4.value = 1e-6
+        # fwhm_model.c5.value = 1e-6
+
+        self.list_of_fwhm = fwhm_model(self.focus_values)
+
+        for i in range(number_of_test_subjects):
+            ccd = CCDData(data=np.ones((100, 1000)),
+                          meta=fits.Header(),
+                          unit='adu')
+            ccd.header['obstype'] = 'FOCUS'
+            ccd.header['cam_foc'] = self.focus_values[i]
+            ccd.header['cam_targ'] = 0
+            ccd.header['grt_targ'] = 0
+            ccd.header['filter'] = 'filter'
+            ccd.header['filter2'] = 'filter2'
+            ccd.header['grating'] = 'grating'
+            ccd.header['slit'] = '0.4 slit'
+            ccd.header['wavmode'] = '400m2'
+            ccd.header['rdnoise'] = 1
+            ccd.header['gain'] = 1
+            ccd.header['roi'] = 'user-defined'
+
+            gaussian = models.Gaussian1D(
+                mean=500,
+                amplitude=600,
+                stddev=self.list_of_fwhm[i]/2.35482004503)
+
+            for e in range(100):
+                ccd.data[e] = gaussian(range(1000))
+
+            ccd.write(self.file_list[i], overwrite=True)
+
+        self.focus_group = pandas.DataFrame(self.file_list, columns=['file'])
+
+        focus_data = []
+        for i in range(number_of_test_subjects):
+            row_data = [self.file_list[i],
+                        self.list_of_fwhm[i],
+                        self.focus_values[i]]
+            focus_data.append(row_data)
+        self.focus_data_frame = pandas.DataFrame(
+            focus_data,
+            columns=['file', 'fwhm', 'focus'])
+
+        self.goodman_focus = GoodmanFocus(arguments=arguments)
+
+    def test_get_focus_data(self):
+
+        result = self.goodman_focus.get_focus_data(group=self.focus_group)
+
+        self.assertIsInstance(result, pandas.DataFrame)
+        np.testing.assert_array_almost_equal(np.array(result['fwhm'].tolist()),
+                                             self.list_of_fwhm)
+
+    def test__fit(self):
+        result = self.goodman_focus._fit(df=self.focus_data_frame)
+
+
+        self.assertIsInstance(result, models.Polynomial1D)
+
+    def test__call__(self):
+        self.goodman_focus()
+        self.assertIsNotNone(self.goodman_focus.fwhm)
+
+    def tearDown(self):
+        for _file in self.file_list:
+            os.unlink(_file)
