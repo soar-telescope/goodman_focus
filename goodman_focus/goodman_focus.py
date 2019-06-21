@@ -172,7 +172,7 @@ def get_peaks(ccd, file_name='', plots=False):
 
     values = np.array([profile[int(index)] for index in peaks])
 
-    if plots:
+    if plots:   # pragma: no cover
         plt.title("{} {}".format(file_name, np.mean(clipped_profile)))
         plt.axhline(0, color='k')
         plt.plot(x_axis, raw_profile, label='Raw Profile')
@@ -371,7 +371,7 @@ class GoodmanFocus(object):
             self._fit(df=focus_dataframe)
             self.log.info("Best Focus for {} is {}".format(self.file_name,
                                                            self.__best_focus))
-            if True:
+            if True:   # pragma: no cover
                 # TODO (simon): Do properly using matplotlib or pandas alone
                 # fig = plt.subplots()
                 focus_dataframe.plot(x='focus', y='fwhm', marker='x')
@@ -382,9 +382,6 @@ class GoodmanFocus(object):
                 plt.plot(new_x_axis,
                          self.polynomial(new_x_axis), label='Model')
                 plt.show()
-
-
-
 
     def _fit(self, df):
         focus = df['focus'].tolist()
@@ -459,10 +456,19 @@ class GoodmanFocus(object):
         return focus_data_frame
 
 
+def run_goodman_focus(args=None):   # pragma: no cover
+    """Entrypoint
+
+    Args:
+        args (list): (optional) a list of arguments and respective values.
+
+    """
+
+    goodman_focus = GoodmanFocus(arguments=args)
+    goodman_focus()
 
 
-
-if __name__ == '__main__':
+if __name__ == '__main__':   # pragma: no cover
     # full_path = '/user/simon/data/soar/work/focus2'
     get_focus = GoodmanFocus()
     get_focus()

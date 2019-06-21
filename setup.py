@@ -85,4 +85,10 @@ setup(
 
     package_dir={'goodman_focus': 'goodman_focus'},
 
+    entry_points={
+        'console_scripts': [
+            'goodman-focus=goodman_focus.goodman_focus:run_goodman_focus',
+        ]
+    }
+
 )
