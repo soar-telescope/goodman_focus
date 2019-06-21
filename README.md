@@ -33,9 +33,9 @@ It will run with the following defaults:
 
 ```text
 --data-path: (Current Working Directory)
---file-pattern *fits
---features-model gaussian
---debug (not activated)
+--file-pattern: *fits
+--features-model: gaussian
+--debug: (not activated)
 
 ```
 
