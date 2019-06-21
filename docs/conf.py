@@ -16,17 +16,19 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+__version__ = __import__('goodman_focus').__version__
 
 # -- Project information -----------------------------------------------------
 
 project = 'Goodman Focus'
 copyright = '2019, Simon Torres'
 author = 'Simon Torres'
+license = 'bsd3'
 
 # The short X.Y version
-version = ''
+version = '.'.join(__version__.split('.')[:2])
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -41,6 +43,8 @@ release = '0.1.0'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
+    'sphinxcontrib.napoleon',
+    'm2r',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -49,8 +53,8 @@ templates_path = ['_templates']
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
+# source_suffix = '.rst'
 
 # The master toctree document.
 master_doc = 'index'
@@ -76,7 +80,11 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
+
+html_logo = '_static/soar_logo.png'
+
+html_context = {'license': 'BSD 3-Clause License'}
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

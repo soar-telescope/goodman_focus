@@ -33,9 +33,10 @@ It will run with the following defaults:
 
 ```text
 --data-path: (Current Working Directory)
---file-pattern *fits
---features-model gaussian
---debug (not activated)
+--file-pattern: *fits
+--obstype: FOCUS
+--features-model: gaussian
+--debug: (not activated)
 
 ```
 
@@ -61,6 +62,7 @@ The list of arguments can be defined as follow:
 ```python
 arguments = ['--data-path', '/provide/some/path',
              '--file-pattern', '*.fits',
+             '--obstype', 'FOCUS',
              '--features-model', 'gaussian',
              '--debug']
 ```
