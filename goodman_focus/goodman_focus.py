@@ -383,9 +383,6 @@ class GoodmanFocus(object):
                          self.polynomial(new_x_axis), label='Model')
                 plt.show()
 
-
-
-
     def _fit(self, df):
         focus = df['focus'].tolist()
         fwhm = df['fwhm'].tolist()
@@ -459,10 +456,19 @@ class GoodmanFocus(object):
         return focus_data_frame
 
 
+def run_goodman_focus(args=None):
+    """Entrypoint
+
+    Args:
+        args (list): (optional) a list of arguments and respective values.
+
+    """
+
+    goodman_focus = GoodmanFocus(arguments=args)
+    goodman_focus()
 
 
-
-if __name__ == '__main__':
+if __name__ == '__main__':   # pragma: no cover
     # full_path = '/user/simon/data/soar/work/focus2'
     get_focus = GoodmanFocus()
     get_focus()
