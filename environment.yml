@@ -13,3 +13,4 @@ dependencies:
       - coveralls
       - sphinx
       - sphinxcontrib.napoleon
+      - m2r
