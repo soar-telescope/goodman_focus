@@ -5,7 +5,8 @@
 
 [![Build Status](https://travis-ci.org/soar-telescope/goodman_focus.svg?branch=master)](https://travis-ci.org/soar-telescope/goodman_focus)
 [![Coverage Status](https://coveralls.io/repos/github/soar-telescope/goodman_focus/badge.svg?branch=master)](https://coveralls.io/github/soar-telescope/goodman_focus?branch=master)
-
+[![Documentation Status](https://readthedocs.org/projects/goodman-focus/badge/?version=latest)](https://goodman-focus.readthedocs.io/en/latest/?badge=latest)
+[![pypi](https://img.shields.io/pypi/v/goodman_focus.svg?style=flat)](https://pypi.org/project/goodman-focus/)
 
 Finds the best focus for one or more focus sequences.
 
