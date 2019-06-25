@@ -2,15 +2,15 @@ name: goodman_focus
 channels:
   - astroconda
 dependencies:
+  - astropy
+  - matplotlib
   - numpy
   - pandas
-  - matplotlib
-  - scipy
-  - astropy
   - pip
+  - scipy
   - pip:
       - ccdproc
       - coveralls
+      - m2r
       - sphinx
       - sphinxcontrib.napoleon
-      - m2r
