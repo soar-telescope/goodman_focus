@@ -50,6 +50,8 @@ AUTHOR = metadata['author']
 
 AUTHOR_EMAIL = metadata['author_email']
 
+INSTALL_REQUIRES = metadata['install_requires'].split()
+
 # freezes version information in version.py
 create_version_py(PACKAGENAME, VERSION)
 
@@ -84,6 +86,8 @@ setup(
     packages=['goodman_focus'],
 
     package_dir={'goodman_focus': 'goodman_focus'},
+
+    install_requires=INSTALL_REQUIRES,
 
     entry_points={
         'console_scripts': [
