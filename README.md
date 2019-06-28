@@ -12,10 +12,47 @@ Finds the best focus for one or more focus sequences.
 
 ## How to Install
 
+This tool requires python `3.6` at least to work. It will not install with `3.5`.
+
+We recommend using [astroconda](https://astroconda.readthedocs.io/en/latest/) since it is easier.
+
+### Using PYPI
+
+Create a virtual environment using `conda` and specify python version `3.6`.
+```bash
+conda create -n goodman_focus python=3.6
+```
+
+Install using `pip`
 ```bash
 pip install goodman-focus
 ```
 
+### Using github
+
+Clone the latest version using:
+
+```bash
+git clone https://github.com/soar-telescope/goodman_focus.git
+```
+
+Move into the new directory
+```bash
+cd goodman_focus
+```
+
+Create a virtual environment using the `environment.yml` file and activate it.
+```bash
+conda env create python=3.6 -f environment.yml
+
+conda activate goodman_focus
+
+```
+
+Install using `pip`
+```bash
+pip install .
+```
 ## How to use it
 
 ### From terminal

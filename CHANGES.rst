@@ -4,3 +4,4 @@
 - Fixed some issues with documentation
 - Added .readthedocs.yml file for RTD builds
 - Added ``install_requires`` field in ``setup()``
+- Removed python 3.5 from the supported versions.
