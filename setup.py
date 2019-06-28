@@ -3,20 +3,10 @@ import os
 from codecs import open
 from setuptools import setup
 
-# from sphinx.setup_command import BuildDoc
-
 try:
     from ConfigParser import ConfigParser
 except ImportError:
     from configparser import ConfigParser
-
-# try:
-#     from sphinx.setup_command import BuildDoc
-#
-#     cmdclassd = {'build_sphinx': BuildDoc,
-#                  'build_docs': BuildDoc}
-# except ImportError:
-#     cmdclassd = {}
 
 CONF = ConfigParser()
 
@@ -60,8 +50,6 @@ AUTHOR_EMAIL = metadata['author_email']
 
 INSTALL_REQUIRES = metadata['install_requires'].split()
 
-print(INSTALL_REQUIRES)
-
 # freezes version information in version.py
 create_version_py(PACKAGENAME, VERSION)
 
@@ -84,8 +72,6 @@ setup(
     author=u'Simon Torres R., ',
 
     author_email='storres@ctio.noao.edu',
-
-    # cmdclass=cmdclassd,
 
     # Choose your license
     license=LICENSE,
