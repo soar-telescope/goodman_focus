@@ -94,6 +94,8 @@ setup(
 
     package_dir={'goodman_focus': 'goodman_focus'},
 
+    python_requires=">=3.6",
+
     install_requires=INSTALL_REQUIRES,
 
     entry_points={
