@@ -325,32 +325,45 @@ class GoodmanFocus(object):
         _ifc = ImageFileCollection(self.full_path, keywords=self.keywords)
 
         self.ifc = _ifc.summary.to_pandas()
+        self.log.debug("Found {} FITS files".format(self.ifc.shape[0]))
         self.ifc = self.ifc[(self.ifc['OBSTYPE'] == self.args.obstype)]
-        self.focus_groups = []
-        configs = self.ifc.groupby(['CAM_TARG',
-                                    'GRT_TARG',
-                                    'FILTER',
-                                    'FILTER2',
-                                    'GRATING',
-                                    'SLIT',
-                                    'WAVMODE',
-                                    'RDNOISE',
-                                    'GAIN',
-                                    'ROI']).size().reset_index().rename(
-            columns={0: 'count'})
-        # print(configs.to_string())
-        for i in configs.index:
-            focus_group = self.ifc[((self.ifc['CAM_TARG'] == configs.iloc[i]['CAM_TARG']) &
-                                    (self.ifc['GRT_TARG'] == configs.iloc[i]['GRT_TARG']) &
-                                    (self.ifc['FILTER'] == configs.iloc[i]['FILTER']) &
-                                    (self.ifc['FILTER2'] == configs.iloc[i]['FILTER2']) &
-                                    (self.ifc['GRATING'] == configs.iloc[i]['GRATING']) &
-                                    (self.ifc['SLIT'] == configs.iloc[i]['SLIT']) &
-                                    (self.ifc['WAVMODE'] == configs.iloc[i]['WAVMODE']) &
-                                    (self.ifc['RDNOISE'] == configs.iloc[i]['RDNOISE']) &
-                                    (self.ifc['GAIN'] == configs.iloc[i]['GAIN']) &
-                                    (self.ifc['ROI'] == configs.iloc[i]['ROI']))]
-            self.focus_groups.append(focus_group)
+        if self.ifc.shape[0] != 0:
+            self.log.debug("Found {} FITS files with OBSTYPE = FOCUS".format(
+                self.ifc.shape[0]))
+
+            self.focus_groups = []
+            configs = self.ifc.groupby(['CAM_TARG',
+                                        'GRT_TARG',
+                                        'FILTER',
+                                        'FILTER2',
+                                        'GRATING',
+                                        'SLIT',
+                                        'WAVMODE',
+                                        'RDNOISE',
+                                        'GAIN',
+                                        'ROI']).size().reset_index().rename(
+                columns={0: 'count'})
+            # print(configs.to_string())
+            for i in configs.index:
+                focus_group = self.ifc[((self.ifc['CAM_TARG'] == configs.iloc[i]['CAM_TARG']) &
+                                        (self.ifc['GRT_TARG'] == configs.iloc[i]['GRT_TARG']) &
+                                        (self.ifc['FILTER'] == configs.iloc[i]['FILTER']) &
+                                        (self.ifc['FILTER2'] == configs.iloc[i]['FILTER2']) &
+                                        (self.ifc['GRATING'] == configs.iloc[i]['GRATING']) &
+                                        (self.ifc['SLIT'] == configs.iloc[i]['SLIT']) &
+                                        (self.ifc['WAVMODE'] == configs.iloc[i]['WAVMODE']) &
+                                        (self.ifc['RDNOISE'] == configs.iloc[i]['RDNOISE']) &
+                                        (self.ifc['GAIN'] == configs.iloc[i]['GAIN']) &
+                                        (self.ifc['ROI'] == configs.iloc[i]['ROI']))]
+                self.focus_groups.append(focus_group)
+        else:
+            self.log.critical('Focus files must have OBSTYPE keyword equal to '
+                              '"FOCUS", none found.')
+            self.log.info('Please use "--obstype" to change the value though '
+                          'it is not recommended to use neither "OBJECT" nor '
+                          '"FLAT" because it may contaminate the sample with '
+                          'non focus images.')
+            sys.exit(0)
 
     @property
     def fwhm(self):
