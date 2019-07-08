@@ -166,3 +166,56 @@ class GoodmanFocusTests(TestCase):
     def tearDown(self):
         for _file in self.file_list:
             os.unlink(_file)
+
+
+class DirectoryAndFilesTest(TestCase):
+
+    def setUp(self):
+        self.arguments = [
+            '--data-path', os.path.join(os.getcwd(), 'nonexisting'),
+            '--file-pattern', '*.fits',
+            '--obstype', 'FOCUS',
+            '--features-model', 'gaussian']
+
+        os.mkdir(os.path.join(os.getcwd(), 'test_dir_empty'))
+        os.mkdir(os.path.join(os.getcwd(), 'test_dir_no_focus'))
+        for i in range(3):
+            ccd = CCDData(data=np.ones((100, 100)),
+                          meta=fits.Header(),
+                          unit='adu')
+            ccd.header['obstype'] = 'OBJECT'
+            ccd.header['cam_foc'] = 0
+            ccd.header['cam_targ'] = 0
+            ccd.header['grt_targ'] = 0
+            ccd.header['filter'] = 'filter'
+            ccd.header['filter2'] = 'filter2'
+            ccd.header['grating'] = 'grating'
+            ccd.header['slit'] = '0.4 slit'
+            ccd.header['wavmode'] = '400m2'
+            ccd.header['rdnoise'] = 1
+            ccd.header['gain'] = 1
+            ccd.header['roi'] = 'user-defined'
+
+            ccd.write(os.path.join(os.getcwd(),
+                                   'test_dir_no_focus',
+                                   'file_{}.fits'.format(i+1)))
+
+    def test_directory_does_not_exists(self):
+
+        # goodman_focus = GoodmanFocus(arguments=arguments)
+        self.assertRaises(SystemExit, GoodmanFocus, self.arguments)
+
+    def test_directory_exists_but_empty(self):
+        self.arguments[1] = os.path.join(os.getcwd(), 'test_dir_empty')
+        self.assertRaises(SystemExit, GoodmanFocus, self.arguments)
+
+    def test_no_focus_files(self):
+        self.arguments[1] = os.path.join(os.getcwd(), 'test_dir_no_focus')
+        self.assertRaises(SystemExit, GoodmanFocus, self.arguments)
+
+
+    def tearDown(self):
+        os.rmdir(os.path.join(os.getcwd(), 'test_dir_empty'))
+        for _file in os.listdir(os.path.join(os.getcwd(), 'test_dir_no_focus')):
+            os.unlink(os.path.join(os.getcwd(), 'test_dir_no_focus', _file))
+        os.rmdir(os.path.join(os.getcwd(), 'test_dir_no_focus'))
