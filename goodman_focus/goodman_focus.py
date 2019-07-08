@@ -102,9 +102,12 @@ def get_args(arguments=None):
     args = parser.parse_args(args=arguments)
 
     if not os.path.isdir(args.data_path):
-        parser.error("Data location {} does not exist".format(args.data_path))
+        log.error("Data location {} does not exist".format(args.data_path))
+        sys.exit(0)
     elif len(glob.glob(os.path.join(args.data_path, args.file_pattern))) == 0:
-        parser.error("There are no files matching \"{}\" in the folder \"{}\"".format(args.file_pattern, args.data_path))
+        log.error("There are no files matching \"{}\" in the folder \"{}\""
+                  "".format(args.file_pattern, args.data_path))
+        sys.exit(0)
 
     return args
 
