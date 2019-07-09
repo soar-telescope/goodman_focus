@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas
+import re
 import sys
 
 from astropy.stats import sigma_clip
@@ -18,6 +19,7 @@ import logging.config
 
 LOG_FORMAT = '[%(asctime)s][%(levelname)s]: %(message)s'
 LOG_LEVEL = logging.INFO
+# LOG_LEVEL = logging.CRITICAL
 
 DATE_FORMAT = '%H:%M:%S'
 
@@ -371,19 +373,22 @@ class GoodmanFocus(object):
 
     def __call__(self, *args, **kwargs):
         for focus_group in self.focus_groups:
-            # print(focus_group)
+            mode_name = self._get_mode_name(focus_group)
 
             focus_dataframe = self.get_focus_data(group=focus_group)
 
             self._fit(df=focus_dataframe)
-            self.log.info("Best Focus for {} is {}".format(self.file_name,
-                                                           self.__best_focus))
+            self.log.info("Best Focus for mode {} is {}".format(
+                mode_name,
+                self.__best_focus))
             if self.plot_results:   # pragma: no cover
                 # TODO (simon): Do properly using matplotlib or pandas alone
                 # fig = plt.subplots()
                 focus_dataframe.plot(x='focus', y='fwhm', marker='x')
                 plt.axvline(self.__best_focus, color='k', label='Best Focus')
-                plt.title("Best Focus: {}".format(self.__best_focus))
+                plt.title("Best Focus:\n{} {:.3f}".format(
+                    mode_name,
+                    self.__best_focus))
                 focus_list = focus_dataframe['focus'].tolist()
                 new_x_axis = np.linspace(focus_list[0], focus_list[-1], 1000)
                 plt.plot(new_x_axis,
@@ -410,6 +415,24 @@ class GoodmanFocus(object):
         self.__best_focus = x_axis[np.argmin(np.abs(derivative))]
 
         return self.__best_focus
+
+    @staticmethod
+    def _get_mode_name(group):
+        unique_values = group.drop_duplicates(
+            subset=['INSTCONF', 'FILTER', 'FILTER2', 'WAVMODE'], keep='first')
+
+        if unique_values['WAVMODE'].values == ['Imaging']:
+            mode_name = 'IM_{}_{}'.format(
+                unique_values['INSTCONF'].values[0],
+                unique_values['FILTER'].values[0])
+        else:
+            mode_name = 'SP_{}_{}_{}'.format(
+                unique_values['INSTCONF'].values[0],
+                unique_values['WAVMODE'].values[0],
+                unique_values['FILTER2'].values[0])
+        mode_name = re.sub('[<> ]', '', mode_name)
+        # mode_name = re.sub('[- ]', '_', mode_name)
+        return mode_name
 
     def get_focus_data(self, group):
         """Collects all the relevant data for finding best focus
