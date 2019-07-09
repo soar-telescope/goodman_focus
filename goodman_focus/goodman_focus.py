@@ -65,6 +65,12 @@ def get_args(arguments=None):
                         help='Model to use in fitting the features in order to'
                              'obtain the FWHM for each of them')
 
+    parser.add_argument('--plot-results',
+                        action='store_true',
+                        dest='plot_results',
+                        help='Show a plot when it finishes the focus '
+                             'calculation')
+
     parser.add_argument('--debug',
                         action='store_true',
                         dest='debug',
@@ -370,7 +376,7 @@ class GoodmanFocus(object):
             self._fit(df=focus_dataframe)
             self.log.info("Best Focus for {} is {}".format(self.file_name,
                                                            self.__best_focus))
-            if True:   # pragma: no cover
+            if self.plot_results:   # pragma: no cover
                 # TODO (simon): Do properly using matplotlib or pandas alone
                 # fig = plt.subplots()
                 focus_dataframe.plot(x='focus', y='fwhm', marker='x')
