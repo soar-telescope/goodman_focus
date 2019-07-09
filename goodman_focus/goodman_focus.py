@@ -15,47 +15,18 @@ from scipy import signal
 import logging
 import logging.config
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {
-        'standard': {
-            'format': '[%(asctime)s][%(levelname)s]: %(message)s',
-            'datefmt': '%H:%M:%S',
-        }
-    },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'formatter': 'standard',
-            'class': 'logging.StreamHandler',
-        },
-        'rotate_file': {
-            'level': 'DEBUG',
-            'formatter': 'standard',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'focus_finder.log',
-            'encoding': 'utf8',
-            'maxBytes': 100000,
-            'backupCount': 1,
-        }
-    },
-    'loggers': {
-        '': {
-            'handlers': ['console', 'rotate_file'],
-            'level': 'DEBUG',
-        },
-}
-}
 
 LOG_FORMAT = '[%(asctime)s][%(levelname)s]: %(message)s'
 LOG_LEVEL = logging.INFO
 
 DATE_FORMAT = '%H:%M:%S'
 
-formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
+# for file handler
+# formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
 
-logging.config.dictConfig(LOGGING)
+logging.basicConfig(level=LOG_LEVEL,
+                    format=LOG_FORMAT,
+                    datefmt=DATE_FORMAT)
 
 log = logging.getLogger(__name__)
 
