@@ -143,7 +143,7 @@ class GoodmanFocusTests(TestCase):
             focus_data,
             columns=['file', 'fwhm', 'focus'])
 
-        self.goodman_focus = GoodmanFocus(arguments=arguments)
+        self.goodman_focus = GoodmanFocus()
 
     def test_get_focus_data(self):
 
@@ -171,12 +171,6 @@ class GoodmanFocusTests(TestCase):
 class DirectoryAndFilesTest(TestCase):
 
     def setUp(self):
-        self.arguments = [
-            '--data-path', os.path.join(os.getcwd(), 'nonexisting'),
-            '--file-pattern', '*.fits',
-            '--obstype', 'FOCUS',
-            '--features-model', 'gaussian']
-
         os.mkdir(os.path.join(os.getcwd(), 'test_dir_empty'))
         os.mkdir(os.path.join(os.getcwd(), 'test_dir_no_focus'))
         for i in range(3):
@@ -203,16 +197,16 @@ class DirectoryAndFilesTest(TestCase):
     def test_directory_does_not_exists(self):
 
         # goodman_focus = GoodmanFocus(arguments=arguments)
-        self.assertRaises(SystemExit, GoodmanFocus, self.arguments)
+        path_non_existing = os.path.join(os.getcwd(), 'non-existing')
+        self.assertRaises(SystemExit, GoodmanFocus, path_non_existing)
 
     def test_directory_exists_but_empty(self):
-        self.arguments[1] = os.path.join(os.getcwd(), 'test_dir_empty')
-        self.assertRaises(SystemExit, GoodmanFocus, self.arguments)
+        empty_path = os.path.join(os.getcwd(), 'test_dir_empty')
+        self.assertRaises(SystemExit, GoodmanFocus, empty_path)
 
     def test_no_focus_files(self):
-        self.arguments[1] = os.path.join(os.getcwd(), 'test_dir_no_focus')
-        self.assertRaises(SystemExit, GoodmanFocus, self.arguments)
-
+        path_no_focus_files = os.path.join(os.getcwd(), 'test_dir_no_focus')
+        self.assertRaises(SystemExit, GoodmanFocus, path_no_focus_files)
 
     def tearDown(self):
         os.rmdir(os.path.join(os.getcwd(), 'test_dir_empty'))

@@ -312,6 +312,8 @@ class GoodmanFocus(object):
 
         if os.path.isdir(self.data_path):
             self.full_path = self.data_path
+            if not os.listdir(self.full_path):
+                sys.exit("Directory is empty")
         else:
             sys.exit("No such directory")
 
