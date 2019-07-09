@@ -271,15 +271,28 @@ class GoodmanFocus(object):
                 'OBSTYPE',
                 'ROI']
 
-    def __init__(self, arguments=None):
-        self.args = get_args(arguments=arguments)
+    def __init__(self,
+                 data_path=os.getcwd(),
+                 file_pattern="*.fits",
+                 obstype="FOCUS",
+                 features_model='gaussian',
+                 plot_results=False,
+                 debug=False):
+
+        self.data_path = data_path
+        self.file_pattern = file_pattern
+        self.obstype = obstype
+        self.features_model = features_model
+        self.plot_results = plot_results
+        self.debug = debug
+
         self.log = logging.getLogger(__name__)
-        if self.args.debug:
+        if self.debug:
             self.log.setLevel(level=logging.DEBUG)
 
-        if self.args.features_model == 'gaussian':
+        if self.features_model == 'gaussian':
             self.feature_model = models.Gaussian1D()
-        elif self.args.features_model == 'moffat':
+        elif self.features_model == 'moffat':
             self.feature_model = models.Moffat1D()
 
         self.__ccd = None
@@ -291,8 +304,8 @@ class GoodmanFocus(object):
         self.fitter = fitting.LevMarLSQFitter()
         self.linear_fitter = fitting.LinearLSQFitter()
 
-        if os.path.isdir(self.args.data_path):
-            self.full_path = self.args.data_path
+        if os.path.isdir(self.data_path):
+            self.full_path = self.data_path
         else:
             sys.exit("No such directory")
 
@@ -300,7 +313,7 @@ class GoodmanFocus(object):
 
         self.ifc = _ifc.summary.to_pandas()
         self.log.debug("Found {} FITS files".format(self.ifc.shape[0]))
-        self.ifc = self.ifc[(self.ifc['OBSTYPE'] == self.args.obstype)]
+        self.ifc = self.ifc[(self.ifc['OBSTYPE'] == self.obstype)]
         if self.ifc.shape[0] != 0:
             self.log.debug("Found {} FITS files with OBSTYPE = FOCUS".format(
                 self.ifc.shape[0]))
@@ -348,7 +361,6 @@ class GoodmanFocus(object):
         if value is not None:
             self._fwhm = value
 
-
     def __call__(self, *args, **kwargs):
         for focus_group in self.focus_groups:
             # print(focus_group)
@@ -362,7 +374,7 @@ class GoodmanFocus(object):
                 # TODO (simon): Do properly using matplotlib or pandas alone
                 # fig = plt.subplots()
                 focus_dataframe.plot(x='focus', y='fwhm', marker='x')
-                plt.axvline(self.__best_focus)
+                plt.axvline(self.__best_focus, color='k', label='Best Focus')
                 plt.title("Best Focus: {}".format(self.__best_focus))
                 focus_list = focus_dataframe['focus'].tolist()
                 new_x_axis = np.linspace(focus_list[0], focus_list[-1], 1000)
@@ -416,7 +428,7 @@ class GoodmanFocus(object):
             peaks, values, x_axis,  profile = get_peaks(
                 ccd=self.__ccd,
                 file_name=self.file_name,
-                plots=self.args.debug)
+                plots=self.debug)
 
             self.fwhm = get_fwhm(peaks=peaks,
                                  values=values,
@@ -450,13 +462,16 @@ def run_goodman_focus(args=None):   # pragma: no cover
         args (list): (optional) a list of arguments and respective values.
 
     """
-
-    goodman_focus = GoodmanFocus(arguments=args)
+    args = get_args()
+    goodman_focus = GoodmanFocus(data_path=args.data_path,
+                                 file_pattern=args.file_pattern,
+                                 obstype=args.obstype,
+                                 features_model=args.features_model,
+                                 plot_results=args.plot_results,
+                                 debug=args.debug)
     goodman_focus()
 
 
 if __name__ == '__main__':   # pragma: no cover
     # full_path = '/user/simon/data/soar/work/focus2'
-    get_focus = GoodmanFocus()
-    get_focus()
-
+    run_goodman_focus()
