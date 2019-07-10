@@ -11,6 +11,9 @@
   several issues. For instance `--debug` was unusable, and also there were
   duplicated log entries for the file handler when used as a library in other
   application. [#10]
+- Replaced the use of the function `get_args` by using arguments on class
+  instantiation instead
+- Created name for modes [#11]
 
 0.1.3
 =====

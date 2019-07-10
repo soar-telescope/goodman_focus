@@ -185,6 +185,11 @@ class GoodmanFocusTests(TestCase):
         self.goodman_focus()
         self.assertIsNotNone(self.goodman_focus.fwhm)
 
+    def test__call__Moffat1D(self):
+        self.goodman_focus = GoodmanFocus(features_model='moffat')
+        self.goodman_focus()
+        self.assertIsNotNone(self.goodman_focus.fwhm)
+
     def tearDown(self):
         for _file in self.file_list:
             os.unlink(_file)
@@ -222,6 +227,7 @@ class DirectoryAndFilesTest(TestCase):
 
     def setUp(self):
         os.mkdir(os.path.join(os.getcwd(), 'test_dir_empty'))
+        os.mkdir(os.path.join(os.getcwd(), 'test_dir_no_matching_files'))
         os.mkdir(os.path.join(os.getcwd(), 'test_dir_no_focus'))
         for i in range(3):
             ccd = CCDData(data=np.ones((100, 100)),
@@ -254,12 +260,30 @@ class DirectoryAndFilesTest(TestCase):
         empty_path = os.path.join(os.getcwd(), 'test_dir_empty')
         self.assertRaises(SystemExit, GoodmanFocus, empty_path)
 
+    def test_directory_not_empty_and_no_matching_files(self):
+        path = os.path.join(os.getcwd(), 'test_dir_no_matching_files')
+
+        open(os.path.join(path, 'sample_file.txt'), 'a').close()
+
+        self.assertRaises(SystemExit, GoodmanFocus, path)
+
     def test_no_focus_files(self):
         path_no_focus_files = os.path.join(os.getcwd(), 'test_dir_no_focus')
         self.assertRaises(SystemExit, GoodmanFocus, path_no_focus_files)
 
     def tearDown(self):
-        os.rmdir(os.path.join(os.getcwd(), 'test_dir_empty'))
+
         for _file in os.listdir(os.path.join(os.getcwd(), 'test_dir_no_focus')):
             os.unlink(os.path.join(os.getcwd(), 'test_dir_no_focus', _file))
+
+        for _file in os.listdir(os.path.join(
+                os.getcwd(),
+                'test_dir_no_matching_files')):
+
+            os.unlink(os.path.join(os.getcwd(),
+                                   'test_dir_no_matching_files',
+                                   _file))
+
+        os.rmdir(os.path.join(os.getcwd(), 'test_dir_empty'))
         os.rmdir(os.path.join(os.getcwd(), 'test_dir_no_focus'))
+        os.rmdir(os.path.join(os.getcwd(), 'test_dir_no_matching_files'))
