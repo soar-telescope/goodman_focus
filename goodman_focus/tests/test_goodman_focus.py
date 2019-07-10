@@ -190,6 +190,34 @@ class GoodmanFocusTests(TestCase):
             os.unlink(_file)
 
 
+class SpectroscopicModeNameTests(TestCase):
+
+    def setUp(self):
+        self.data = {'file': ['file_{}.fits'.format(i + 1) for i in range(5)],
+                     'INSTCONF': ['Blue'] * 5,
+                     'FILTER': ['FILTER-X'] * 5,
+                     'FILTER2': ['NO FILTER'] * 5,
+                     'WAVMODE': ['Imaging'] * 5}
+
+
+    def test_imaging_mode(self):
+        df = pandas.DataFrame(self.data)
+        expected_name = 'IM_Blue_FILTER-X'
+        mode_name = GoodmanFocus._get_mode_name(group=df)
+        self.assertEqual(mode_name, expected_name)
+
+    def test_spectroscopy_mode(self):
+        self.data['WAVMODE'] = ['400  z1'] * 5
+        df = pandas.DataFrame(self.data)
+
+        expected_name = 'SP_Blue_400z1_NOFILTER'
+
+        mode_name = GoodmanFocus._get_mode_name(group=df)
+
+        self.assertEqual(mode_name, expected_name)
+
+
+
 class DirectoryAndFilesTest(TestCase):
 
     def setUp(self):
