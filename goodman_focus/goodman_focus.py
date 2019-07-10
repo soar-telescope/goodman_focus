@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas
+import re
 import sys
 
 from astropy.stats import sigma_clip
@@ -18,6 +19,7 @@ import logging.config
 
 LOG_FORMAT = '[%(asctime)s][%(levelname)s]: %(message)s'
 LOG_LEVEL = logging.INFO
+# LOG_LEVEL = logging.CRITICAL
 
 DATE_FORMAT = '%H:%M:%S'
 
@@ -65,20 +67,18 @@ def get_args(arguments=None):
                         help='Model to use in fitting the features in order to'
                              'obtain the FWHM for each of them')
 
+    parser.add_argument('--plot-results',
+                        action='store_true',
+                        dest='plot_results',
+                        help='Show a plot when it finishes the focus '
+                             'calculation')
+
     parser.add_argument('--debug',
                         action='store_true',
                         dest='debug',
                         help='Activate debug mode')
 
     args = parser.parse_args(args=arguments)
-
-    if not os.path.isdir(args.data_path):
-        log.error("Data location {} does not exist".format(args.data_path))
-        sys.exit(0)
-    elif len(glob.glob(os.path.join(args.data_path, args.file_pattern))) == 0:
-        log.error("There are no files matching \"{}\" in the folder \"{}\""
-                  "".format(args.file_pattern, args.data_path))
-        sys.exit(0)
 
     return args
 
@@ -271,15 +271,28 @@ class GoodmanFocus(object):
                 'OBSTYPE',
                 'ROI']
 
-    def __init__(self, arguments=None):
-        self.args = get_args(arguments=arguments)
+    def __init__(self,
+                 data_path=os.getcwd(),
+                 file_pattern="*.fits",
+                 obstype="FOCUS",
+                 features_model='gaussian',
+                 plot_results=False,
+                 debug=False):
+
+        self.data_path = data_path
+        self.file_pattern = file_pattern
+        self.obstype = obstype
+        self.features_model = features_model
+        self.plot_results = plot_results
+        self.debug = debug
+
         self.log = logging.getLogger(__name__)
-        if self.args.debug:
+        if self.debug:
             self.log.setLevel(level=logging.DEBUG)
 
-        if self.args.features_model == 'gaussian':
+        if self.features_model == 'gaussian':
             self.feature_model = models.Gaussian1D()
-        elif self.args.features_model == 'moffat':
+        elif self.features_model == 'moffat':
             self.feature_model = models.Moffat1D()
 
         self.__ccd = None
@@ -291,16 +304,26 @@ class GoodmanFocus(object):
         self.fitter = fitting.LevMarLSQFitter()
         self.linear_fitter = fitting.LinearLSQFitter()
 
-        if os.path.isdir(self.args.data_path):
-            self.full_path = self.args.data_path
+        if os.path.isdir(self.data_path):
+            self.full_path = self.data_path
+            if not os.listdir(self.full_path):
+                self.log.critical("Directory is empty")
+                sys.exit(0)
+            # print(glob.glob(os.path.join(self.full_path, self.file_pattern)))
+            elif not glob.glob(os.path.join(self.full_path, self.file_pattern)):
+                self.log.critical('Directory {} does not containe files '
+                                  'matching the pattern {}'
+                                  ''.format(self.full_path, self.file_pattern))
+                sys.exit(0)
         else:
-            sys.exit("No such directory")
+            self.log.critical("No such directory")
+            sys.exit(0)
 
         _ifc = ImageFileCollection(self.full_path, keywords=self.keywords)
 
         self.ifc = _ifc.summary.to_pandas()
         self.log.debug("Found {} FITS files".format(self.ifc.shape[0]))
-        self.ifc = self.ifc[(self.ifc['OBSTYPE'] == self.args.obstype)]
+        self.ifc = self.ifc[(self.ifc['OBSTYPE'] == self.obstype)]
         if self.ifc.shape[0] != 0:
             self.log.debug("Found {} FITS files with OBSTYPE = FOCUS".format(
                 self.ifc.shape[0]))
@@ -348,22 +371,24 @@ class GoodmanFocus(object):
         if value is not None:
             self._fwhm = value
 
-
     def __call__(self, *args, **kwargs):
         for focus_group in self.focus_groups:
-            # print(focus_group)
+            mode_name = self._get_mode_name(focus_group)
 
             focus_dataframe = self.get_focus_data(group=focus_group)
 
             self._fit(df=focus_dataframe)
-            self.log.info("Best Focus for {} is {}".format(self.file_name,
-                                                           self.__best_focus))
-            if True:   # pragma: no cover
+            self.log.info("Best Focus for mode {} is {}".format(
+                mode_name,
+                self.__best_focus))
+            if self.plot_results:   # pragma: no cover
                 # TODO (simon): Do properly using matplotlib or pandas alone
                 # fig = plt.subplots()
                 focus_dataframe.plot(x='focus', y='fwhm', marker='x')
-                plt.axvline(self.__best_focus)
-                plt.title("Best Focus: {}".format(self.__best_focus))
+                plt.axvline(self.__best_focus, color='k', label='Best Focus')
+                plt.title("Best Focus:\n{} {:.3f}".format(
+                    mode_name,
+                    self.__best_focus))
                 focus_list = focus_dataframe['focus'].tolist()
                 new_x_axis = np.linspace(focus_list[0], focus_list[-1], 1000)
                 plt.plot(new_x_axis,
@@ -391,6 +416,24 @@ class GoodmanFocus(object):
 
         return self.__best_focus
 
+    @staticmethod
+    def _get_mode_name(group):
+        unique_values = group.drop_duplicates(
+            subset=['INSTCONF', 'FILTER', 'FILTER2', 'WAVMODE'], keep='first')
+
+        if unique_values['WAVMODE'].values == ['Imaging']:
+            mode_name = 'IM_{}_{}'.format(
+                unique_values['INSTCONF'].values[0],
+                unique_values['FILTER'].values[0])
+        else:
+            mode_name = 'SP_{}_{}_{}'.format(
+                unique_values['INSTCONF'].values[0],
+                unique_values['WAVMODE'].values[0],
+                unique_values['FILTER2'].values[0])
+        mode_name = re.sub('[<> ]', '', mode_name)
+        # mode_name = re.sub('[- ]', '_', mode_name)
+        return mode_name
+
     def get_focus_data(self, group):
         """Collects all the relevant data for finding best focus
 
@@ -416,7 +459,7 @@ class GoodmanFocus(object):
             peaks, values, x_axis,  profile = get_peaks(
                 ccd=self.__ccd,
                 file_name=self.file_name,
-                plots=self.args.debug)
+                plots=self.debug)
 
             self.fwhm = get_fwhm(peaks=peaks,
                                  values=values,
@@ -450,13 +493,16 @@ def run_goodman_focus(args=None):   # pragma: no cover
         args (list): (optional) a list of arguments and respective values.
 
     """
-
-    goodman_focus = GoodmanFocus(arguments=args)
+    args = get_args(arguments=args)
+    goodman_focus = GoodmanFocus(data_path=args.data_path,
+                                 file_pattern=args.file_pattern,
+                                 obstype=args.obstype,
+                                 features_model=args.features_model,
+                                 plot_results=args.plot_results,
+                                 debug=args.debug)
     goodman_focus()
 
 
 if __name__ == '__main__':   # pragma: no cover
     # full_path = '/user/simon/data/soar/work/focus2'
-    get_focus = GoodmanFocus()
-    get_focus()
-
+    run_goodman_focus()

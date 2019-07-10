@@ -9,11 +9,33 @@ from unittest import TestCase, skip
 from ccdproc import CCDData
 
 from ..goodman_focus import GoodmanFocus
-from ..goodman_focus import get_peaks, get_fwhm
+from ..goodman_focus import get_args, get_peaks, get_fwhm
 
 import matplotlib.pyplot as plt
 
 logging.disable(logging.CRITICAL)
+
+
+class ArgumentTests(TestCase):
+
+    def setUp(self):
+        self.arg_list = ['--data-path', os.getcwd(),
+                         '--file-pattern', '*.myfile',
+                         '--obstype', 'ANY',
+                         '--features-model', 'moffat',
+                         '--plot-results',
+                         '--debug']
+
+    def test_get_args_default(self):
+        args = get_args(arguments=self.arg_list)
+        self.assertEqual(args.__class__.__name__, 'Namespace')
+        self.assertEqual(args.data_path, os.getcwd())
+        self.assertEqual(args.file_pattern, '*.myfile')
+        self.assertEqual(args.obstype, 'ANY')
+        self.assertEqual(args.features_model, 'moffat')
+        self.assertTrue(args.plot_results)
+        self.assertTrue(args.debug)
+
 
 class GetPeaksTest(TestCase):
 
@@ -143,7 +165,7 @@ class GoodmanFocusTests(TestCase):
             focus_data,
             columns=['file', 'fwhm', 'focus'])
 
-        self.goodman_focus = GoodmanFocus(arguments=arguments)
+        self.goodman_focus = GoodmanFocus()
 
     def test_get_focus_data(self):
 
@@ -163,21 +185,49 @@ class GoodmanFocusTests(TestCase):
         self.goodman_focus()
         self.assertIsNotNone(self.goodman_focus.fwhm)
 
+    def test__call__Moffat1D(self):
+        self.goodman_focus = GoodmanFocus(features_model='moffat')
+        self.goodman_focus()
+        self.assertIsNotNone(self.goodman_focus.fwhm)
+
     def tearDown(self):
         for _file in self.file_list:
             os.unlink(_file)
 
 
+class SpectroscopicModeNameTests(TestCase):
+
+    def setUp(self):
+        self.data = {'file': ['file_{}.fits'.format(i + 1) for i in range(5)],
+                     'INSTCONF': ['Blue'] * 5,
+                     'FILTER': ['FILTER-X'] * 5,
+                     'FILTER2': ['NO FILTER'] * 5,
+                     'WAVMODE': ['Imaging'] * 5}
+
+
+    def test_imaging_mode(self):
+        df = pandas.DataFrame(self.data)
+        expected_name = 'IM_Blue_FILTER-X'
+        mode_name = GoodmanFocus._get_mode_name(group=df)
+        self.assertEqual(mode_name, expected_name)
+
+    def test_spectroscopy_mode(self):
+        self.data['WAVMODE'] = ['400  z1'] * 5
+        df = pandas.DataFrame(self.data)
+
+        expected_name = 'SP_Blue_400z1_NOFILTER'
+
+        mode_name = GoodmanFocus._get_mode_name(group=df)
+
+        self.assertEqual(mode_name, expected_name)
+
+
+
 class DirectoryAndFilesTest(TestCase):
 
     def setUp(self):
-        self.arguments = [
-            '--data-path', os.path.join(os.getcwd(), 'nonexisting'),
-            '--file-pattern', '*.fits',
-            '--obstype', 'FOCUS',
-            '--features-model', 'gaussian']
-
         os.mkdir(os.path.join(os.getcwd(), 'test_dir_empty'))
+        os.mkdir(os.path.join(os.getcwd(), 'test_dir_no_matching_files'))
         os.mkdir(os.path.join(os.getcwd(), 'test_dir_no_focus'))
         for i in range(3):
             ccd = CCDData(data=np.ones((100, 100)),
@@ -203,19 +253,37 @@ class DirectoryAndFilesTest(TestCase):
     def test_directory_does_not_exists(self):
 
         # goodman_focus = GoodmanFocus(arguments=arguments)
-        self.assertRaises(SystemExit, GoodmanFocus, self.arguments)
+        path_non_existing = os.path.join(os.getcwd(), 'non-existing')
+        self.assertRaises(SystemExit, GoodmanFocus, path_non_existing)
 
     def test_directory_exists_but_empty(self):
-        self.arguments[1] = os.path.join(os.getcwd(), 'test_dir_empty')
-        self.assertRaises(SystemExit, GoodmanFocus, self.arguments)
+        empty_path = os.path.join(os.getcwd(), 'test_dir_empty')
+        self.assertRaises(SystemExit, GoodmanFocus, empty_path)
+
+    def test_directory_not_empty_and_no_matching_files(self):
+        path = os.path.join(os.getcwd(), 'test_dir_no_matching_files')
+
+        open(os.path.join(path, 'sample_file.txt'), 'a').close()
+
+        self.assertRaises(SystemExit, GoodmanFocus, path)
 
     def test_no_focus_files(self):
-        self.arguments[1] = os.path.join(os.getcwd(), 'test_dir_no_focus')
-        self.assertRaises(SystemExit, GoodmanFocus, self.arguments)
-
+        path_no_focus_files = os.path.join(os.getcwd(), 'test_dir_no_focus')
+        self.assertRaises(SystemExit, GoodmanFocus, path_no_focus_files)
 
     def tearDown(self):
-        os.rmdir(os.path.join(os.getcwd(), 'test_dir_empty'))
+
         for _file in os.listdir(os.path.join(os.getcwd(), 'test_dir_no_focus')):
             os.unlink(os.path.join(os.getcwd(), 'test_dir_no_focus', _file))
+
+        for _file in os.listdir(os.path.join(
+                os.getcwd(),
+                'test_dir_no_matching_files')):
+
+            os.unlink(os.path.join(os.getcwd(),
+                                   'test_dir_no_matching_files',
+                                   _file))
+
+        os.rmdir(os.path.join(os.getcwd(), 'test_dir_empty'))
         os.rmdir(os.path.join(os.getcwd(), 'test_dir_no_focus'))
+        os.rmdir(os.path.join(os.getcwd(), 'test_dir_no_matching_files'))

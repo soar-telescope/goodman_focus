@@ -1,5 +1,5 @@
-0.1.4 (Not released yet)
-========================
+0.2.0
+=====
 
 - Added messages when no file matches the `--obstype` value, by default is
   `FOCUS` [#9]
@@ -11,6 +11,9 @@
   several issues. For instance `--debug` was unusable, and also there were
   duplicated log entries for the file handler when used as a library in other
   application. [#10]
+- Replaced the use of the function `get_args` by using arguments on class
+  instantiation instead
+- Created name for modes [#11]
 
 0.1.3
 =====
