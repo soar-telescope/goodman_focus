@@ -1,5 +1,5 @@
-0.1.4 (Not released yet)
-========================
+0.2.0
+=====
 
 - Added messages when no file matches the `--obstype` value, by default is
   `FOCUS` [#9]
