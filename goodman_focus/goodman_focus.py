@@ -80,14 +80,6 @@ def get_args(arguments=None):
 
     args = parser.parse_args(args=arguments)
 
-    if not os.path.isdir(args.data_path):
-        log.error("Data location {} does not exist".format(args.data_path))
-        sys.exit(0)
-    elif len(glob.glob(os.path.join(args.data_path, args.file_pattern))) == 0:
-        log.error("There are no files matching \"{}\" in the folder \"{}\""
-                  "".format(args.file_pattern, args.data_path))
-        sys.exit(0)
-
     return args
 
 
@@ -315,9 +307,17 @@ class GoodmanFocus(object):
         if os.path.isdir(self.data_path):
             self.full_path = self.data_path
             if not os.listdir(self.full_path):
-                sys.exit("Directory is empty")
+                self.log.critical("Directory is empty")
+                sys.exit(0)
+            # print(glob.glob(os.path.join(self.full_path, self.file_pattern)))
+            elif not glob.glob(os.path.join(self.full_path, self.file_pattern)):
+                self.log.critical('Directory {} does not containe files '
+                                  'matching the pattern {}'
+                                  ''.format(self.full_path, self.file_pattern))
+                sys.exit(0)
         else:
-            sys.exit("No such directory")
+            self.log.critical("No such directory")
+            sys.exit(0)
 
         _ifc = ImageFileCollection(self.full_path, keywords=self.keywords)
 
@@ -493,7 +493,7 @@ def run_goodman_focus(args=None):   # pragma: no cover
         args (list): (optional) a list of arguments and respective values.
 
     """
-    args = get_args()
+    args = get_args(arguments=args)
     goodman_focus = GoodmanFocus(data_path=args.data_path,
                                  file_pattern=args.file_pattern,
                                  obstype=args.obstype,

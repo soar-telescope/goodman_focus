@@ -9,11 +9,33 @@ from unittest import TestCase, skip
 from ccdproc import CCDData
 
 from ..goodman_focus import GoodmanFocus
-from ..goodman_focus import get_peaks, get_fwhm
+from ..goodman_focus import get_args, get_peaks, get_fwhm
 
 import matplotlib.pyplot as plt
 
 logging.disable(logging.CRITICAL)
+
+
+class ArgumentTests(TestCase):
+
+    def setUp(self):
+        self.arg_list = ['--data-path', os.getcwd(),
+                         '--file-pattern', '*.myfile',
+                         '--obstype', 'ANY',
+                         '--features-model', 'moffat',
+                         '--plot-results',
+                         '--debug']
+
+    def test_get_args_default(self):
+        args = get_args(arguments=self.arg_list)
+        self.assertEqual(args.__class__.__name__, 'Namespace')
+        self.assertEqual(args.data_path, os.getcwd())
+        self.assertEqual(args.file_pattern, '*.myfile')
+        self.assertEqual(args.obstype, 'ANY')
+        self.assertEqual(args.features_model, 'moffat')
+        self.assertTrue(args.plot_results)
+        self.assertTrue(args.debug)
+
 
 class GetPeaksTest(TestCase):
 
