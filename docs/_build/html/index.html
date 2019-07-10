@@ -28,7 +28,8 @@
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Using PYPI" href="install.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -84,22 +85,18 @@
               
             
             
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">Welcome to Goodman Focus’ documentation!</a></li>
-<li><a class="reference internal" href="#goodman-focus-finder">Goodman Focus Finder</a><ul>
-<li><a class="reference internal" href="#how-to-install">How to Install</a></li>
-<li><a class="reference internal" href="#how-to-use-it">How to use it</a><ul>
-<li><a class="reference internal" href="#from-terminal">From terminal</a></li>
-<li><a class="reference internal" href="#in-other-code">In other code</a></li>
+              <p class="caption"><span class="caption-text">How to Install</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Using PYPI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html#using-github">Using GitHub</a></li>
 </ul>
-</li>
+<p class="caption"><span class="caption-text">How to Use it</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usingit.html">From terminal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usingit.html#as-a-library">As a Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usingit.html#interpreting-results">Interpreting Results</a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#found-a-problem">Found a problem?</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-</ul>
-</div>
+
             
           
         </div>
@@ -164,68 +161,28 @@
             
   <div class="section" id="welcome-to-goodman-focus-documentation">
 <h1>Welcome to Goodman Focus’ documentation!<a class="headerlink" href="#welcome-to-goodman-focus-documentation" title="Permalink to this headline">¶</a></h1>
-</div>
-<div class="section" id="goodman-focus-finder">
-<h1>Goodman Focus Finder<a class="headerlink" href="#goodman-focus-finder" title="Permalink to this headline">¶</a></h1>
-<a class="reference external image-reference" href="https://travis-ci.org/soar-telescope/goodman_focus"><img alt="Build Status" src="https://travis-ci.org/soar-telescope/goodman_focus.svg?branch=master" /></a>
-<a class="reference external image-reference" href="https://coveralls.io/github/soar-telescope/goodman_focus?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/soar-telescope/goodman_focus/badge.svg?branch=master" /></a>
+<a class="reference external image-reference" href="https://travis-ci.org/soar-telescope/goodman_focus"><img alt="https://travis-ci.org/soar-telescope/goodman_focus.svg?branch=master" src="https://travis-ci.org/soar-telescope/goodman_focus.svg?branch=master" /></a>
+<a class="reference external image-reference" href="https://coveralls.io/github/soar-telescope/goodman_focus?branch=master"><img alt="https://coveralls.io/repos/github/soar-telescope/goodman_focus/badge.svg?branch=master" src="https://coveralls.io/repos/github/soar-telescope/goodman_focus/badge.svg?branch=master" /></a>
 <a class="reference external image-reference" href="https://goodman-focus.readthedocs.io/en/latest/?badge=latest"><img alt="Documentation Status" src="https://readthedocs.org/projects/goodman-focus/badge/?version=latest" /></a>
-<a class="reference external image-reference" href="https://pypi.org/project/goodman-focus/"><img alt="pypi" src="https://img.shields.io/pypi/v/goodman_focus.svg?style=flat" /></a>
-<p>Finds the best focus for one or more focus sequences.</p>
-<div class="section" id="how-to-install">
-<h2>How to Install<a class="headerlink" href="#how-to-install" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>pip install goodman-focus
-</pre></div>
+<a class="reference external image-reference" href="https://pypi.org/project/goodman-focus/"><img alt="PyPI" src="https://img.shields.io/pypi/v/goodman_focus.svg" /></a>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">How to Install</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Using PYPI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html#using-github">Using GitHub</a></li>
+</ul>
 </div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">How to Use it</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usingit.html">From terminal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usingit.html#as-a-library">As a Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usingit.html#interpreting-results">Interpreting Results</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usingit.html#decoding-de-mode-name">Decoding de mode name</a></li>
+</ul>
+</li>
+</ul>
 </div>
-<div class="section" id="how-to-use-it">
-<h2>How to use it<a class="headerlink" href="#how-to-use-it" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="from-terminal">
-<h3>From terminal<a class="headerlink" href="#from-terminal" title="Permalink to this headline">¶</a></h3>
-<p>There is an automatic script that will obtain focus from a folder containing
-a focus sequence.</p>
-<p>If you have <code class="docutils literal"><span class="pre">fits</span></code> files you can simply run.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>goodman-focus
-</pre></div>
-</div>
-<p>It will run with the following defaults:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>--data-path: (Current Working Directory)
---file-pattern: *fits
---features-model: gaussian
---debug: (not activated)
-</pre></div>
-</div>
-<p>To get some help and a full list of options use:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>goodman-focus -h
-</pre></div>
-</div>
-</div>
-<div class="section" id="in-other-code">
-<h3>In other code<a class="headerlink" href="#in-other-code" title="Permalink to this headline">¶</a></h3>
-<p>After installing using pip you can also import the class and instatiate it
-providing a list of arguments and values.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">goodman_focus.goodman_focus</span> <span class="kn">import</span> <span class="n">GoodmanFocus</span>
-</pre></div>
-</div>
-<p>If no argument is provided it will run with the default values.</p>
-<p>The list of arguments can be defined as follow:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">arguments</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;--data-path&#39;</span><span class="p">,</span> <span class="s1">&#39;/provide/some/path&#39;</span><span class="p">,</span>
-             <span class="s1">&#39;--file-pattern&#39;</span><span class="p">,</span> <span class="s1">&#39;*.fits&#39;</span><span class="p">,</span>
-             <span class="s1">&#39;--features-model&#39;</span><span class="p">,</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span>
-             <span class="s1">&#39;--debug&#39;</span><span class="p">]</span>
-</pre></div>
-</div>
-<p><code class="docutils literal"><span class="pre">--features-model</span></code> is the function/model to fit to each detected line.
-<code class="docutils literal"><span class="pre">gaussian</span></code> will use a <code class="docutils literal"><span class="pre">Gaussian1D</span></code> which provide more consistent results.
-and <code class="docutils literal"><span class="pre">moffat</span></code> will use a <code class="docutils literal"><span class="pre">Moffat1D</span></code> model which fits the profile better but
-is harder to control and results are less consistent than when using a gaussian.</p>
-</div>
-</div>
-</div>
-<div class="section" id="found-a-problem">
-<h1>Found a problem?<a class="headerlink" href="#found-a-problem" title="Permalink to this headline">¶</a></h1>
-<p>Please <a class="reference external" href="https://github.com/soar-telescope/goodman_focus/issues">Open an Issue</a> on
-GitHub.</p>
 <div class="toctree-wrapper compound">
 </div>
 </div>
@@ -243,6 +200,13 @@ GitHub.</p>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="install.html" class="btn btn-neutral float-right" title="Using PYPI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
   
 
   <hr/>
