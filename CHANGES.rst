@@ -3,6 +3,9 @@
 
 - Created dedicated documentation for rtd
 - Fixed bug where return was missing
+- GoodmanFocus need to be instantiated only once [#19]
+- Argument --file-pattern is now actually used in file selection [#18]
+- Eliminated some warnings
 
 0.2.0
 =====

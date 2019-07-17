@@ -130,6 +130,7 @@ class GoodmanFocusTests(TestCase):
             ccd = CCDData(data=np.ones((100, 1000)),
                           meta=fits.Header(),
                           unit='adu')
+            ccd.header['instconf'] = 'Red'
             ccd.header['obstype'] = 'FOCUS'
             ccd.header['cam_foc'] = self.focus_values[i]
             ccd.header['cam_targ'] = 0
@@ -189,6 +190,19 @@ class GoodmanFocusTests(TestCase):
         self.goodman_focus = GoodmanFocus(features_model='moffat')
         self.goodman_focus()
         self.assertIsNotNone(self.goodman_focus.fwhm)
+
+    def test__call__with_list(self):
+        self.assertIsNone(self.goodman_focus.fwhm)
+        result = self.goodman_focus(files=self.file_list)
+        self.assertIsNotNone(self.goodman_focus.fwhm)
+
+    def test__call__list_file_no_exist(self):
+        file_list = ["no_file_{}.fits".format(i) for i in range(10, 20)]
+        self.assertRaises(SystemExit, self.goodman_focus, file_list)
+
+    def test__call__not_a_list(self):
+        _string = 'not a list'
+        self.assertRaises(SystemExit, self.goodman_focus, _string)
 
     def tearDown(self):
         for _file in self.file_list:
