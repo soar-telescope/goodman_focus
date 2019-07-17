@@ -18,11 +18,6 @@ Welcome to Goodman Focus' documentation!
     :alt: PyPI
 
 
-.. warning::
-
-   This project is under heavy development, therefore you might encounter
-   errors in documentation or it could be incomplete.
-
 .. toctree::
    :maxdepth: 2
    :caption: How to Install
