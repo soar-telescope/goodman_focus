@@ -323,7 +323,9 @@ class GoodmanFocus(object):
     def __call__(self, files=None):
         if files is None:
 
-            _ifc = ImageFileCollection(self.full_path, keywords=self.keywords)
+            _ifc = ImageFileCollection(location=self.full_path,
+                                       keywords=self.keywords,
+                                       glob_include=self.file_pattern)
 
             self.ifc = _ifc.summary.to_pandas()
             self.log.debug("Found {} FITS files".format(self.ifc.shape[0]))
