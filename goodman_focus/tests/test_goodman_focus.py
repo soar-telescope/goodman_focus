@@ -269,7 +269,8 @@ class DirectoryAndFilesTest(TestCase):
 
     def test_no_focus_files(self):
         path_no_focus_files = os.path.join(os.getcwd(), 'test_dir_no_focus')
-        self.assertRaises(SystemExit, GoodmanFocus, path_no_focus_files)
+        goodman_focus = GoodmanFocus(data_path=path_no_focus_files)
+        self.assertRaises(SystemExit, goodman_focus)
 
     def tearDown(self):
 

@@ -7,6 +7,7 @@ import pandas
 import re
 import sys
 
+from astropy.io import fits
 from astropy.stats import sigma_clip
 from astropy.modeling import models, fitting, Model
 from ccdproc import CCDData
@@ -319,59 +320,78 @@ class GoodmanFocus(object):
             self.log.critical("No such directory")
             sys.exit(0)
 
-        _ifc = ImageFileCollection(self.full_path, keywords=self.keywords)
+    def __call__(self, files=None):
+        if files is None:
 
-        self.ifc = _ifc.summary.to_pandas()
-        self.log.debug("Found {} FITS files".format(self.ifc.shape[0]))
-        self.ifc = self.ifc[(self.ifc['OBSTYPE'] == self.obstype)]
-        if self.ifc.shape[0] != 0:
-            self.log.debug("Found {} FITS files with OBSTYPE = FOCUS".format(
-                self.ifc.shape[0]))
+            _ifc = ImageFileCollection(self.full_path, keywords=self.keywords)
 
-            self.focus_groups = []
-            configs = self.ifc.groupby(['CAM_TARG',
-                                        'GRT_TARG',
-                                        'FILTER',
-                                        'FILTER2',
-                                        'GRATING',
-                                        'SLIT',
-                                        'WAVMODE',
-                                        'RDNOISE',
-                                        'GAIN',
-                                        'ROI']).size().reset_index().rename(
-                columns={0: 'count'})
-            # print(configs.to_string())
-            for i in configs.index:
-                focus_group = self.ifc[((self.ifc['CAM_TARG'] == configs.iloc[i]['CAM_TARG']) &
-                                        (self.ifc['GRT_TARG'] == configs.iloc[i]['GRT_TARG']) &
-                                        (self.ifc['FILTER'] == configs.iloc[i]['FILTER']) &
-                                        (self.ifc['FILTER2'] == configs.iloc[i]['FILTER2']) &
-                                        (self.ifc['GRATING'] == configs.iloc[i]['GRATING']) &
-                                        (self.ifc['SLIT'] == configs.iloc[i]['SLIT']) &
-                                        (self.ifc['WAVMODE'] == configs.iloc[i]['WAVMODE']) &
-                                        (self.ifc['RDNOISE'] == configs.iloc[i]['RDNOISE']) &
-                                        (self.ifc['GAIN'] == configs.iloc[i]['GAIN']) &
-                                        (self.ifc['ROI'] == configs.iloc[i]['ROI']))]
-                self.focus_groups.append(focus_group)
+            self.ifc = _ifc.summary.to_pandas()
+            self.log.debug("Found {} FITS files".format(self.ifc.shape[0]))
+            self.ifc = self.ifc[(self.ifc['OBSTYPE'] == self.obstype)]
+            if self.ifc.shape[0] != 0:
+                self.log.debug("Found {} FITS files with OBSTYPE = FOCUS".format(
+                    self.ifc.shape[0]))
+
+                self.focus_groups = []
+                configs = self.ifc.groupby(['CAM_TARG',
+                                            'GRT_TARG',
+                                            'FILTER',
+                                            'FILTER2',
+                                            'GRATING',
+                                            'SLIT',
+                                            'WAVMODE',
+                                            'RDNOISE',
+                                            'GAIN',
+                                            'ROI']).size().reset_index().rename(
+                    columns={0: 'count'})
+                # print(configs.to_string())
+                for i in configs.index:
+                    focus_group = self.ifc[
+                        ((self.ifc['CAM_TARG'] == configs.iloc[i]['CAM_TARG']) &
+                         (self.ifc['GRT_TARG'] == configs.iloc[i]['GRT_TARG']) &
+                         (self.ifc['FILTER'] == configs.iloc[i]['FILTER']) &
+                         (self.ifc['FILTER2'] == configs.iloc[i]['FILTER2']) &
+                         (self.ifc['GRATING'] == configs.iloc[i]['GRATING']) &
+                         (self.ifc['SLIT'] == configs.iloc[i]['SLIT']) &
+                         (self.ifc['WAVMODE'] == configs.iloc[i]['WAVMODE']) &
+                         (self.ifc['RDNOISE'] == configs.iloc[i]['RDNOISE']) &
+                         (self.ifc['GAIN'] == configs.iloc[i]['GAIN']) &
+                         (self.ifc['ROI'] == configs.iloc[i]['ROI']))]
+                    self.focus_groups.append(focus_group)
+            else:
+                self.log.critical('Focus files must have OBSTYPE keyword equal to '
+                                  '"FOCUS", none found.')
+                self.log.info('Please use "--obstype" to change the value though '
+                              'it is not recommended to use neither "OBJECT" nor '
+                              '"FLAT" because it may contaminate the sample with '
+                              'non focus images.')
+                sys.exit(0)
         else:
-            self.log.critical('Focus files must have OBSTYPE keyword equal to '
-                              '"FOCUS", none found.')
-            self.log.info('Please use "--obstype" to change the value though '
-                          'it is not recommended to use neither "OBJECT" nor '
-                          '"FLAT" because it may contaminate the sample with '
-                          'non focus images.')
-            sys.exit(0)
+            if isinstance(files, list):
+                full_path_content = os.listdir(self.full_path)
 
-    @property
-    def fwhm(self):
-        return self._fwhm
+                if not all([_file in full_path_content for _file in files]):
+                    files_dont_exist = [_file for _file in files if _file not in full_path_content]
+                    for _file in files_dont_exist:
+                        self.log.critical("File {} does not exist in {}"
+                                          "".format(_file, self.full_path))
+                    sys.exit(0)
+                else:
+                    data = {'file': files}
 
-    @fwhm.setter
-    def fwhm(self, value):
-        if value is not None:
-            self._fwhm = value
+                    for key in ['INSTCONF', 'FILTER', 'FILTER2', 'WAVMODE']:
+                        key_data = [fits.getval(os.path.join(self.full_path,
+                                                             _file), key) for _file in files]
 
-    def __call__(self, *args, **kwargs):
+                        data[key] = key_data
+
+                    self.focus_groups = [pandas.DataFrame(data)]
+
+            else:
+                self.log.critical('"files" argument must be a list')
+                sys.exit(0)
+
+
         results = {}
         for focus_group in self.focus_groups:
             mode_name = self._get_mode_name(focus_group)
@@ -398,6 +418,15 @@ class GoodmanFocus(object):
                 plt.show()
 
         return results
+
+    @property
+    def fwhm(self):
+        return self._fwhm
+
+    @fwhm.setter
+    def fwhm(self, value):
+        if value is not None:
+            self._fwhm = value
 
     def _fit(self, df):
         focus = df['focus'].tolist()
@@ -504,7 +533,43 @@ def run_goodman_focus(args=None):   # pragma: no cover
                                  features_model=args.features_model,
                                  plot_results=args.plot_results,
                                  debug=args.debug)
-    goodman_focus()
+    result = goodman_focus()
+    log.info("Summary")
+    for key in result.keys():
+        log.info("Mode: {} Best Focus: {}".format(key, result[key]))
+
+
+# def run_goodman_focus_list(args=None):   # pragma: no cover
+#     """Entrypoint
+#
+#     Args:
+#         args (list): (optional) a list of arguments and respective values.
+#
+#     """
+#     args = get_args(arguments=args)
+#     goodman_focus = GoodmanFocus(data_path=args.data_path,
+#                                  file_pattern=args.file_pattern,
+#                                  obstype=args.obstype,
+#                                  features_model=args.features_model,
+#                                  plot_results=args.plot_results,
+#                                  debug=args.debug)
+#
+#     file_list = ['0016_foc_400m2.fits',
+#                  '0018_foc_400m2.fits',
+#                  '0020_foc_400m2.fits',
+#                  '0022_foc_400m2.fits',
+#                  '0024_foc_400m2.fits',
+#                  '0026_foc_400m2.fits',
+#                  '0028_foc_400m2.fits',
+#                  '0017_foc_400m2.fits',
+#                  '0019_foc_400m2.fits',
+#                  '0021_foc_400m2.fits',
+#                  '0023_foc_400m2.fits',
+#                  '0025_foc_400m2.fits',
+#                  '0027_foc_400m2.fits']
+#
+#     result = goodman_focus(files=file_list)
+#     print(result)
 
 
 if __name__ == '__main__':   # pragma: no cover
