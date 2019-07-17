@@ -1,7 +1,8 @@
 0.2.1 (Unreleased)
 ==================
 
-- add entry
+- Created dedicated documentation for rtd
+- Fixed bug where return was missing
 
 0.2.0
 =====
