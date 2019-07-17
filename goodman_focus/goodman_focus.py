@@ -113,7 +113,7 @@ def get_peaks(ccd, file_name='', plots=False):
     raw_profile = np.median(ccd.data[low_limit:high_limit, :], axis=0)
     x_axis = np.array(range(len(raw_profile)))
 
-    clipped_profile = sigma_clip(raw_profile, sigma=1, iters=5)
+    clipped_profile = sigma_clip(raw_profile, sigma=1, maxiters=5)
 
     _mean = np.mean(clipped_profile)
 
@@ -123,7 +123,7 @@ def get_peaks(ccd, file_name='', plots=False):
     background_model = models.Linear1D(slope=0,
                                        intercept=np.mean(clipped_profile))
 
-    fitter = fitting.SimplexLSQFitter()
+    fitter = fitting.LinearLSQFitter()
 
     fitted_background = fitter(background_model,
                                clipped_x_axis,
@@ -228,7 +228,7 @@ def get_fwhm(peaks, values, x_axis, profile, model):
     else:
         log.info("Applying sigma clipping to collected FWHM values."
                  " SIGMA: 3, ITERATIONS: 1")
-        clipped_fwhm = sigma_clip(all_fwhm, sigma=3, iters=1)
+        clipped_fwhm = sigma_clip(all_fwhm, sigma=3, maxiters=1)
 
         if np.ma.is_masked(clipped_fwhm):
             cleaned_fwhm = clipped_fwhm[~clipped_fwhm.mask]
