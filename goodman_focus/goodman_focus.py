@@ -372,6 +372,7 @@ class GoodmanFocus(object):
             self._fwhm = value
 
     def __call__(self, *args, **kwargs):
+        results = {}
         for focus_group in self.focus_groups:
             mode_name = self._get_mode_name(focus_group)
 
@@ -381,6 +382,7 @@ class GoodmanFocus(object):
             self.log.info("Best Focus for mode {} is {}".format(
                 mode_name,
                 self.__best_focus))
+            results[mode_name] = self.__best_focus
             if self.plot_results:   # pragma: no cover
                 # TODO (simon): Do properly using matplotlib or pandas alone
                 # fig = plt.subplots()
@@ -394,6 +396,8 @@ class GoodmanFocus(object):
                 plt.plot(new_x_axis,
                          self.polynomial(new_x_axis), label='Model')
                 plt.show()
+
+        return results
 
     def _fit(self, df):
         focus = df['focus'].tolist()
