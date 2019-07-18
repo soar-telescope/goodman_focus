@@ -21,7 +21,7 @@ __version__ = __import__('goodman_focus').__version__
 # -- Project information -----------------------------------------------------
 
 project = 'Goodman Focus'
-copyright = '2019, Simon Torres'
+copyright = '2019, SOAR Telescope'
 author = 'Simon Torres'
 license = 'bsd3'
 
@@ -45,6 +45,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinxcontrib.napoleon',
     'm2r',
+    'matplotlib.sphinxext.plot_directive',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

@@ -1,7 +1,12 @@
+.. note::
+
+   We recommend using a virtual environment management system such as
+   `astroconda <https://astroconda.readthedocs.io/en/latest/>`_
+
 .. _`Installing with PIP`:
 
-Using PYPI
-##########
+Install Using PYPI
+##################
 
 Create a virtual environment using `conda` and specify python version `3.6`.
 
@@ -11,8 +16,8 @@ Install using `pip`
 
   ``pip install goodman-focus``
 
-Using GitHub
-############
+Install Using GitHub
+####################
 
 Clone the latest version using:
 
