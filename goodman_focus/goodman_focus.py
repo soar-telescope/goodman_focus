@@ -406,17 +406,26 @@ class GoodmanFocus(object):
                 self.__best_focus))
             results[mode_name] = self.__best_focus
             if self.plot_results:   # pragma: no cover
-                # TODO (simon): Do properly using matplotlib or pandas alone
-                # fig = plt.subplots()
-                focus_dataframe.plot(x='focus', y='fwhm', marker='x')
-                plt.axvline(self.__best_focus, color='k', label='Best Focus')
-                plt.title("Best Focus:\n{} {:.3f}".format(
+
+                fig, ax = plt.subplots()
+
+                focus_list = focus_dataframe['focus'].tolist()
+                fwhm_list = focus_dataframe['fwhm'].tolist()
+                new_x_axis = np.linspace(focus_list[0], focus_list[-1], 1000)
+
+                ax.plot(focus_list, fwhm_list, marker='x', label='Measured FWHM')
+                ax.axvline(self.__best_focus, color='k', label='Best Focus')
+                ax.set_title("Best Focus:\n{} {:.3f}".format(
                     mode_name,
                     self.__best_focus))
-                focus_list = focus_dataframe['focus'].tolist()
-                new_x_axis = np.linspace(focus_list[0], focus_list[-1], 1000)
-                plt.plot(new_x_axis,
-                         self.polynomial(new_x_axis), label='Model')
+                ax.set_xlabel("Focus Value")
+                if 'IM_' in mode_name:
+                    ax.set_ylabel("FWHM")
+                else:
+                    ax.set_ylabel("Mean FWHM")
+                ax.plot(new_x_axis,
+                        self.polynomial(new_x_axis), label='Model')
+                ax.legend(loc='best')
                 plt.show()
 
         return results
