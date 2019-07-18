@@ -17,6 +17,16 @@ Welcome to Goodman Focus' documentation!
     :target: https://pypi.org/project/goodman-focus/
     :alt: PyPI
 
+Overview
+========
+
+This is a tool to obtain the best focus from a series of images obtained at
+different focus values. It works for imaging and for spectroscopy.
+
+This tool requires python `3.6` at least to work. It will not install with `3.5`.
+
+We recommend using `astroconda <https://astroconda.readthedocs.io/en/latest/>`_ since it is easier.
+
 
 .. toctree::
    :maxdepth: 2
@@ -29,6 +39,7 @@ Welcome to Goodman Focus' documentation!
    :maxdepth: 2
    :caption: How to Use it
 
+   gettingdata
    usingit
 
 

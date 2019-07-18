@@ -1,5 +1,5 @@
-From terminal
-#############
+Running from terminal
+#####################
 
 There is an automatic script that will obtain focus from a folder containing
 a focus sequence.
@@ -30,8 +30,8 @@ To get some help and a full list of options use:
   ``goodman-focus -h``
 
 
-As a Library
-############
+Using it as a library
+#####################
 
 After installing :ref:`Installing with PIP` you can also import the class and instantiate it
 providing a set of arguments and values or using default ones.
