@@ -1,11 +1,18 @@
-0.2.1 (Unreleased)
-==================
 
-- Created dedicated documentation for rtd
-- Fixed bug where return was missing
+.. _v0.3.0:
+
+0.3.0
+=====
+
+- Created dedicated documentation for readthedocs.
+- Fixed bug where return was missing,
 - GoodmanFocus need to be instantiated only once [#19]
+- Calling instance of GoodmanFocus can receive a list of files as input [#19]
 - Argument --file-pattern is now actually used in file selection [#18]
-- Eliminated some warnings
+- Eliminated some warnings.
+- Included plots in documentation.
+
+.. _v0.2.0:
 
 0.2.0
 =====

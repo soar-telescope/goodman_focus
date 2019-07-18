@@ -48,6 +48,12 @@ We recommend using `astroconda <https://astroconda.readthedocs.io/en/latest/>`_ 
    :caption: Contents:
 
 
+.. toctree::
+   :maxdepth: 2
+   :caption: About
+
+   changes
+
 
 Indices and tables
 ==================

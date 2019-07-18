@@ -82,6 +82,9 @@ Finally you need to call the instance, here is a full example.
   results = goodman_focus()
 
 
+However since version :ref:`v0.3.0` you can pass a list of files and all will only check that all files exists
+
+
 Interpreting Results
 ####################
 
