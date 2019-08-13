@@ -1,3 +1,13 @@
+.. _v0.3.1
+
+0.3.1
+=====
+
+- Fixed bug on the calculation of the pseudo-derivate used to find best focus
+  value
+- Updated hardcoded string that defines the Imaging wavmode from `Imaging` to
+  the new `IMAGING`.
+- Added docstrings
 
 .. _v0.3.0:
 

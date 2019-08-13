@@ -440,6 +440,14 @@ class GoodmanFocus(object):
             self._fwhm = value
 
     def _fit(self, df):
+        """
+
+        Args:
+            df:
+
+        Returns:
+
+        """
         focus = df['focus'].tolist()
         fwhm = df['fwhm'].tolist()
 
@@ -450,11 +458,25 @@ class GoodmanFocus(object):
         return self.polynomial
 
     def _get_local_minimum(self, x1, x2):
+        """Finds best focus
+
+        By calculating a pseudo-derivative of the fitted model to the focus
+        values. The best focus is when the FWHM is minumum.
+
+        Args:
+            x1 (float): Minimum measured focus value.
+            x2 (float): Maximum measured focus value.
+
+        Returns:
+            best_focus (float): Minimum of absolute value of pseudo-derivative
+            values (i.e. closest to zero).
+
+        """
         x_axis = np.linspace(x1, x2, 2000)
         modeled_data = self.polynomial(x_axis)
         derivative = []
         for i in range(len(modeled_data) - 1):
-            derivative.append(modeled_data[i+1] - modeled_data[i]/(x_axis[i+1]-x_axis[i]))
+            derivative.append((modeled_data[i+1] - modeled_data[i])/(x_axis[i+1]-x_axis[i]))
 
         self.__best_focus = x_axis[np.argmin(np.abs(derivative))]
 
@@ -462,10 +484,29 @@ class GoodmanFocus(object):
 
     @staticmethod
     def _get_mode_name(group):
+        """Defines a string characteristic of the instrument configuration
+
+        Depending on the observing technique used the name is defined according
+        to the following rules.
+
+        Imaging: `IM_{INSTCONF}_{FILTER}` where the values in between the curly
+        braces are keywords from the headers.
+
+        Spectroscopy: `SP_{INSTCONF}_{WAVMODE}_{FILTER2}`
+
+        Args:
+            group (pandas.DataFrame): A `~pandas.DataFrame` containing only
+            images with `OBSTYPE=FOCUS` or images from a list provided by the
+            user.
+
+        Returns:
+            mode_name (str): A single string unique to the observing mode.
+
+        """
         unique_values = group.drop_duplicates(
             subset=['INSTCONF', 'FILTER', 'FILTER2', 'WAVMODE'], keep='first')
 
-        if unique_values['WAVMODE'].values == ['Imaging']:
+        if unique_values['WAVMODE'].values == ['IMAGING']:
             mode_name = 'IM_{}_{}'.format(
                 unique_values['INSTCONF'].values[0],
                 unique_values['FILTER'].values[0])

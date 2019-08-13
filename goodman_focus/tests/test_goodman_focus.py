@@ -216,7 +216,7 @@ class SpectroscopicModeNameTests(TestCase):
                      'INSTCONF': ['Blue'] * 5,
                      'FILTER': ['FILTER-X'] * 5,
                      'FILTER2': ['NO FILTER'] * 5,
-                     'WAVMODE': ['Imaging'] * 5}
+                     'WAVMODE': ['IMAGING'] * 5}
 
 
     def test_imaging_mode(self):
