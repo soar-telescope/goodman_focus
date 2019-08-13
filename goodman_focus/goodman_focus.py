@@ -18,19 +18,6 @@ import logging
 import logging.config
 
 
-LOG_FORMAT = '[%(asctime)s][%(levelname)s]: %(message)s'
-LOG_LEVEL = logging.INFO
-# LOG_LEVEL = logging.CRITICAL
-
-DATE_FORMAT = '%H:%M:%S'
-
-# for file handler
-# formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
-
-logging.basicConfig(level=LOG_LEVEL,
-                    format=LOG_FORMAT,
-                    datefmt=DATE_FORMAT)
-
 log = logging.getLogger(__name__)
 
 
@@ -307,21 +294,21 @@ class GoodmanFocus(object):
 
         if os.path.isdir(self.data_path):
             self.full_path = self.data_path
-            if not os.listdir(self.full_path):
-                self.log.critical("Directory is empty")
-                sys.exit(0)
-            # print(glob.glob(os.path.join(self.full_path, self.file_pattern)))
-            elif not glob.glob(os.path.join(self.full_path, self.file_pattern)):
-                self.log.critical('Directory {} does not containe files '
-                                  'matching the pattern {}'
-                                  ''.format(self.full_path, self.file_pattern))
-                sys.exit(0)
         else:
             self.log.critical("No such directory")
             sys.exit(0)
 
     def __call__(self, files=None):
         if files is None:
+            if not os.listdir(self.full_path):
+                self.log.critical("Directory is empty")
+                sys.exit(0)
+
+            elif not glob.glob(os.path.join(self.full_path, self.file_pattern)):
+                self.log.critical('Directory {} does not containe files '
+                                  'matching the pattern {}'
+                                  ''.format(self.full_path, self.file_pattern))
+                sys.exit(0)
 
             _ifc = ImageFileCollection(location=self.full_path,
                                        keywords=self.keywords,
@@ -578,6 +565,17 @@ def run_goodman_focus(args=None):   # pragma: no cover
         args (list): (optional) a list of arguments and respective values.
 
     """
+    LOG_FORMAT = '[%(asctime)s][%(levelname)s]: %(message)s'
+    LOG_LEVEL = logging.INFO
+
+    DATE_FORMAT = '%H:%M:%S'
+
+    logging.basicConfig(level=LOG_LEVEL,
+                        format=LOG_FORMAT,
+                        datefmt=DATE_FORMAT)
+
+    log = logging.getLogger(__name__)
+
     args = get_args(arguments=args)
     goodman_focus = GoodmanFocus(data_path=args.data_path,
                                  file_pattern=args.file_pattern,
@@ -585,6 +583,7 @@ def run_goodman_focus(args=None):   # pragma: no cover
                                  features_model=args.features_model,
                                  plot_results=args.plot_results,
                                  debug=args.debug)
+
     result = goodman_focus()
     log.info("Summary")
     for key in result.keys():
