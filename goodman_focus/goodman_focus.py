@@ -18,19 +18,6 @@ import logging
 import logging.config
 
 
-LOG_FORMAT = '[%(asctime)s][%(levelname)s]: %(message)s'
-LOG_LEVEL = logging.INFO
-# LOG_LEVEL = logging.CRITICAL
-
-DATE_FORMAT = '%H:%M:%S'
-
-# for file handler
-# formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
-
-logging.basicConfig(level=LOG_LEVEL,
-                    format=LOG_FORMAT,
-                    datefmt=DATE_FORMAT)
-
 log = logging.getLogger(__name__)
 
 
@@ -165,7 +152,7 @@ def get_peaks(ccd, file_name='', plots=False):
     return peaks, values, x_axis, profile
 
 
-def get_fwhm(peaks, values, x_axis, profile, model):
+def get_fwhm(peaks, values, x_axis, profile, model, sigma=3, maxiter=3):
     """Finds FWHM for an image by fitting a model
 
     For Imaging there is only one peak (the slit itself) but for spectroscopy
@@ -186,6 +173,8 @@ def get_fwhm(peaks, values, x_axis, profile, model):
          analyzed.
         model (Model): A model to fit to each peak location. `Gaussian1D` and
         `Moffat1D` are supported.
+        sigma (int): Number sigmas to use on sigma-clipping
+        maxiter (int): Maximum number of sigma-clipping iterations
 
     Returns:
         The FWHM, mean FWHM or `None`.
@@ -227,8 +216,8 @@ def get_fwhm(peaks, values, x_axis, profile, model):
         return all_fwhm[0]
     else:
         log.info("Applying sigma clipping to collected FWHM values."
-                 " SIGMA: 3, ITERATIONS: 1")
-        clipped_fwhm = sigma_clip(all_fwhm, sigma=3, maxiters=1)
+                 " SIGMA: 3, ITERATIONS: 2")
+        clipped_fwhm = sigma_clip(all_fwhm, sigma=sigma, maxiters=maxiter)
 
         if np.ma.is_masked(clipped_fwhm):
             cleaned_fwhm = clipped_fwhm[~clipped_fwhm.mask]
@@ -307,21 +296,21 @@ class GoodmanFocus(object):
 
         if os.path.isdir(self.data_path):
             self.full_path = self.data_path
-            if not os.listdir(self.full_path):
-                self.log.critical("Directory is empty")
-                sys.exit(0)
-            # print(glob.glob(os.path.join(self.full_path, self.file_pattern)))
-            elif not glob.glob(os.path.join(self.full_path, self.file_pattern)):
-                self.log.critical('Directory {} does not containe files '
-                                  'matching the pattern {}'
-                                  ''.format(self.full_path, self.file_pattern))
-                sys.exit(0)
         else:
             self.log.critical("No such directory")
             sys.exit(0)
 
     def __call__(self, files=None):
         if files is None:
+            if not os.listdir(self.full_path):
+                self.log.critical("Directory is empty")
+                sys.exit(0)
+
+            elif not glob.glob(os.path.join(self.full_path, self.file_pattern)):
+                self.log.critical('Directory {} does not containe files '
+                                  'matching the pattern {}'
+                                  ''.format(self.full_path, self.file_pattern))
+                sys.exit(0)
 
             _ifc = ImageFileCollection(location=self.full_path,
                                        keywords=self.keywords,
@@ -440,6 +429,14 @@ class GoodmanFocus(object):
             self._fwhm = value
 
     def _fit(self, df):
+        """
+
+        Args:
+            df:
+
+        Returns:
+
+        """
         focus = df['focus'].tolist()
         fwhm = df['fwhm'].tolist()
 
@@ -450,11 +447,25 @@ class GoodmanFocus(object):
         return self.polynomial
 
     def _get_local_minimum(self, x1, x2):
+        """Finds best focus
+
+        By calculating a pseudo-derivative of the fitted model to the focus
+        values. The best focus is when the FWHM is minumum.
+
+        Args:
+            x1 (float): Minimum measured focus value.
+            x2 (float): Maximum measured focus value.
+
+        Returns:
+            best_focus (float): Minimum of absolute value of pseudo-derivative
+            values (i.e. closest to zero).
+
+        """
         x_axis = np.linspace(x1, x2, 2000)
         modeled_data = self.polynomial(x_axis)
         derivative = []
         for i in range(len(modeled_data) - 1):
-            derivative.append(modeled_data[i+1] - modeled_data[i]/(x_axis[i+1]-x_axis[i]))
+            derivative.append((modeled_data[i+1] - modeled_data[i])/(x_axis[i+1]-x_axis[i]))
 
         self.__best_focus = x_axis[np.argmin(np.abs(derivative))]
 
@@ -462,10 +473,29 @@ class GoodmanFocus(object):
 
     @staticmethod
     def _get_mode_name(group):
+        """Defines a string characteristic of the instrument configuration
+
+        Depending on the observing technique used the name is defined according
+        to the following rules.
+
+        Imaging: `IM_{INSTCONF}_{FILTER}` where the values in between the curly
+        braces are keywords from the headers.
+
+        Spectroscopy: `SP_{INSTCONF}_{WAVMODE}_{FILTER2}`
+
+        Args:
+            group (pandas.DataFrame): A `~pandas.DataFrame` containing only
+            images with `OBSTYPE=FOCUS` or images from a list provided by the
+            user.
+
+        Returns:
+            mode_name (str): A single string unique to the observing mode.
+
+        """
         unique_values = group.drop_duplicates(
             subset=['INSTCONF', 'FILTER', 'FILTER2', 'WAVMODE'], keep='first')
 
-        if unique_values['WAVMODE'].values == ['Imaging']:
+        if unique_values['WAVMODE'].values == ['IMAGING']:
             mode_name = 'IM_{}_{}'.format(
                 unique_values['INSTCONF'].values[0],
                 unique_values['FILTER'].values[0])
@@ -537,6 +567,17 @@ def run_goodman_focus(args=None):   # pragma: no cover
         args (list): (optional) a list of arguments and respective values.
 
     """
+    LOG_FORMAT = '[%(asctime)s][%(levelname)s]: %(message)s'
+    LOG_LEVEL = logging.INFO
+
+    DATE_FORMAT = '%H:%M:%S'
+
+    logging.basicConfig(level=LOG_LEVEL,
+                        format=LOG_FORMAT,
+                        datefmt=DATE_FORMAT)
+
+    log = logging.getLogger(__name__)
+
     args = get_args(arguments=args)
     goodman_focus = GoodmanFocus(data_path=args.data_path,
                                  file_pattern=args.file_pattern,
@@ -544,6 +585,7 @@ def run_goodman_focus(args=None):   # pragma: no cover
                                  features_model=args.features_model,
                                  plot_results=args.plot_results,
                                  debug=args.debug)
+
     result = goodman_focus()
     log.info("Summary")
     for key in result.keys():

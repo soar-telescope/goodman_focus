@@ -216,7 +216,7 @@ class SpectroscopicModeNameTests(TestCase):
                      'INSTCONF': ['Blue'] * 5,
                      'FILTER': ['FILTER-X'] * 5,
                      'FILTER2': ['NO FILTER'] * 5,
-                     'WAVMODE': ['Imaging'] * 5}
+                     'WAVMODE': ['IMAGING'] * 5}
 
 
     def test_imaging_mode(self):
@@ -272,14 +272,17 @@ class DirectoryAndFilesTest(TestCase):
 
     def test_directory_exists_but_empty(self):
         empty_path = os.path.join(os.getcwd(), 'test_dir_empty')
-        self.assertRaises(SystemExit, GoodmanFocus, empty_path)
+        goodman_focus = GoodmanFocus(data_path=empty_path)
+        self.assertRaises(SystemExit, goodman_focus)
 
     def test_directory_not_empty_and_no_matching_files(self):
         path = os.path.join(os.getcwd(), 'test_dir_no_matching_files')
 
         open(os.path.join(path, 'sample_file.txt'), 'a').close()
 
-        self.assertRaises(SystemExit, GoodmanFocus, path)
+        goodman_focus = GoodmanFocus(data_path=path)
+
+        self.assertRaises(SystemExit, goodman_focus)
 
     def test_no_focus_files(self):
         path_no_focus_files = os.path.join(os.getcwd(), 'test_dir_no_focus')
