@@ -152,7 +152,7 @@ def get_peaks(ccd, file_name='', plots=False):
     return peaks, values, x_axis, profile
 
 
-def get_fwhm(peaks, values, x_axis, profile, model):
+def get_fwhm(peaks, values, x_axis, profile, model, sigma=3, maxiter=3):
     """Finds FWHM for an image by fitting a model
 
     For Imaging there is only one peak (the slit itself) but for spectroscopy
@@ -173,6 +173,8 @@ def get_fwhm(peaks, values, x_axis, profile, model):
          analyzed.
         model (Model): A model to fit to each peak location. `Gaussian1D` and
         `Moffat1D` are supported.
+        sigma (int): Number sigmas to use on sigma-clipping
+        maxiter (int): Maximum number of sigma-clipping iterations
 
     Returns:
         The FWHM, mean FWHM or `None`.
@@ -214,8 +216,8 @@ def get_fwhm(peaks, values, x_axis, profile, model):
         return all_fwhm[0]
     else:
         log.info("Applying sigma clipping to collected FWHM values."
-                 " SIGMA: 3, ITERATIONS: 1")
-        clipped_fwhm = sigma_clip(all_fwhm, sigma=3, maxiters=1)
+                 " SIGMA: 3, ITERATIONS: 2")
+        clipped_fwhm = sigma_clip(all_fwhm, sigma=sigma, maxiters=maxiter)
 
         if np.ma.is_masked(clipped_fwhm):
             cleaned_fwhm = clipped_fwhm[~clipped_fwhm.mask]
