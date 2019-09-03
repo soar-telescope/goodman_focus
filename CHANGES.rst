@@ -1,4 +1,31 @@
-.. _v0.3.1
+.. _v0.3.4:
+
+0.3.4
+=====
+
+- Fixed version of `ccdproc` to `1.3.0.post1`. `ccdproc==2.0.0` does have some
+  problems reported on `astropy/ccdproc#699`
+
+
+.. _v0.3.3:
+
+0.3.3
+=====
+
+- Changed Sigma Clipping iterations from 1 to 3
+- Added sigma clip iterations as argument to function `get_fwhm` though this is
+  not exposed to the user.
+
+.. _v0.3.2:
+
+0.3.2
+=====
+
+- Changed logger setup
+- Moved data directory validation from instantiation to execution.
+
+
+.. _v0.3.1:
 
 0.3.1
 =====
