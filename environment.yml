@@ -9,7 +9,7 @@ dependencies:
   - pip
   - scipy
   - pip:
-      - ccdproc
+      - ccdproc==1.3.0.post1
       - coveralls
       - m2r
       - sphinx
