@@ -1,3 +1,12 @@
+.. _v0.3.5:
+
+0.3.5
+=====
+
+- Implemented Github Actions
+- Removed astroconda channel from environment
+
+
 .. _v0.3.4:
 
 0.3.4

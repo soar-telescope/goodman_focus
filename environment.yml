@@ -1,7 +1,6 @@
 name: goodman_focus
-channels:
-  - astroconda
 dependencies:
+  - python=3.8
   - astropy
   - matplotlib
   - numpy
