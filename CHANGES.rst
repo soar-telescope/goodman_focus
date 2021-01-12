@@ -1,3 +1,12 @@
+.. _v0.3.6:
+
+0.3.6
+=====
+
+- Added python 3.7 and 3.8 to Travis CI
+- Removed astroconda from environment.yml and specified python 3.8 to avoid 3.9
+
+
 .. _v0.3.5:
 
 0.3.5
