@@ -496,14 +496,14 @@ class GoodmanFocus(object):
             subset=['INSTCONF', 'FILTER', 'FILTER2', 'WAVMODE'], keep='first')
 
         if unique_values['WAVMODE'].values == ['IMAGING']:
-            mode_name = 'IM_{}_{}'.format(
-                unique_values['INSTCONF'].values[0],
-                unique_values['FILTER'].values[0])
+            mode_name = '__'.join(['IM',
+                                   str(unique_values['INSTCONF'].values[0]),
+                                   str(unique_values['FILTER'].values[0])])
         else:
-            mode_name = 'SP_{}_{}_{}'.format(
-                unique_values['INSTCONF'].values[0],
-                unique_values['WAVMODE'].values[0],
-                unique_values['FILTER2'].values[0])
+            mode_name = '__'.join(['SP',
+                                   str(unique_values['INSTCONF'].values[0]),
+                                   str(unique_values['WAVMODE'].values[0]),
+                                   str(unique_values['FILTER2'].values[0])])
         mode_name = re.sub('[<> ]', '', mode_name)
         # mode_name = re.sub('[- ]', '_', mode_name)
         return mode_name
@@ -592,39 +592,5 @@ def run_goodman_focus(args=None):   # pragma: no cover
         log.info("Mode: {} Best Focus: {}".format(key, result[key]))
 
 
-# def run_goodman_focus_list(args=None):   # pragma: no cover
-#     """Entrypoint
-#
-#     Args:
-#         args (list): (optional) a list of arguments and respective values.
-#
-#     """
-#     args = get_args(arguments=args)
-#     goodman_focus = GoodmanFocus(data_path=args.data_path,
-#                                  file_pattern=args.file_pattern,
-#                                  obstype=args.obstype,
-#                                  features_model=args.features_model,
-#                                  plot_results=args.plot_results,
-#                                  debug=args.debug)
-#
-#     file_list = ['0016_foc_400m2.fits',
-#                  '0018_foc_400m2.fits',
-#                  '0020_foc_400m2.fits',
-#                  '0022_foc_400m2.fits',
-#                  '0024_foc_400m2.fits',
-#                  '0026_foc_400m2.fits',
-#                  '0028_foc_400m2.fits',
-#                  '0017_foc_400m2.fits',
-#                  '0019_foc_400m2.fits',
-#                  '0021_foc_400m2.fits',
-#                  '0023_foc_400m2.fits',
-#                  '0025_foc_400m2.fits',
-#                  '0027_foc_400m2.fits']
-#
-#     result = goodman_focus(files=file_list)
-#     print(result)
-
-
 if __name__ == '__main__':   # pragma: no cover
-    # full_path = '/user/simon/data/soar/work/focus2'
     run_goodman_focus()
