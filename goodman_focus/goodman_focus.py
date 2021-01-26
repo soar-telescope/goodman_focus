@@ -168,11 +168,10 @@ def get_fwhm(peaks, values, x_axis, profile, model, sigma=3, maxiter=3):
         peaks (numpy.ndarray): An array of peaks present in the profile.
         values (numpy.ndarray): An array of values at peak location.
         x_axis (numpy.ndarray): X-axis for the profile, usually is equivalent to
-        `range(len(profile))`.
-        profile (numpy.ndarray): 1-dimensional profile of the image being
-         analyzed.
+         `range(len(profile))`.
+        profile (numpy.ndarray): 1-dimensional profile of the image being analyzed.
         model (Model): A model to fit to each peak location. `Gaussian1D` and
-        `Moffat1D` are supported.
+         `Moffat1D` are supported.
         sigma (int): Number sigmas to use on sigma-clipping
         maxiter (int): Maximum number of sigma-clipping iterations
 
