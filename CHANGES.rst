@@ -1,3 +1,13 @@
+.. _v1.0.0:
+
+1.0.0
+=====
+
+- Removed Travis CI [#31]
+- Replaced separator to double underscore [#34, #35]
+- Updated documentation.
+
+
 .. _v0.3.6:
 
 0.3.6
