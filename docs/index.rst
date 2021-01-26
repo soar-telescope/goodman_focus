@@ -6,8 +6,8 @@
 Welcome to Goodman Focus' documentation!
 ========================================
 
-.. image:: https://travis-ci.org/soar-telescope/goodman_focus.svg?branch=master
-    :target: https://travis-ci.org/soar-telescope/goodman_focus
+.. image:: https://github.com/soar-telescope/goodman_focus/workflows/Goodman%20Focus/badge.svg
+    :alt: Goodman Focus
 .. image:: https://coveralls.io/repos/github/soar-telescope/goodman_focus/badge.svg?branch=master
     :target: https://coveralls.io/github/soar-telescope/goodman_focus?branch=master
 .. image:: https://readthedocs.org/projects/goodman-focus/badge/?version=latest
@@ -24,8 +24,6 @@ This is a tool to obtain the best focus from a series of images obtained at
 different focus values. It works for imaging and for spectroscopy.
 
 This tool requires python `3.6` at least to work. It will not install with `3.5`.
-
-We recommend using `astroconda <https://astroconda.readthedocs.io/en/latest/>`_ since it is easier.
 
 
 .. toctree::

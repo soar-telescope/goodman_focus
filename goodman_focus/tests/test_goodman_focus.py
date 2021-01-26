@@ -221,7 +221,7 @@ class SpectroscopicModeNameTests(TestCase):
 
     def test_imaging_mode(self):
         df = pandas.DataFrame(self.data)
-        expected_name = 'IM_Blue_FILTER-X'
+        expected_name = 'IM__Blue__FILTER-X'
         mode_name = GoodmanFocus._get_mode_name(group=df)
         self.assertEqual(mode_name, expected_name)
 
@@ -229,7 +229,7 @@ class SpectroscopicModeNameTests(TestCase):
         self.data['WAVMODE'] = ['400  z1'] * 5
         df = pandas.DataFrame(self.data)
 
-        expected_name = 'SP_Blue_400z1_NOFILTER'
+        expected_name = 'SP__Blue__400z1__NOFILTER'
 
         mode_name = GoodmanFocus._get_mode_name(group=df)
 

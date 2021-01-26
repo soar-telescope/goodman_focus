@@ -90,7 +90,7 @@ Interpreting Results
 
 The terminal version will print a message like this
 
-  ``[17:16:06][INFO]: Best Focus for mode SP_Red_400m2_GG455 is -1032.6413206603302``
+  ``[17:16:06][INFO]: Best Focus for mode SP__Red__400m2__GG455 is -1032.6413206603302``
 
 
 Using it as a library will return a dictionary with the following values.
@@ -100,16 +100,16 @@ explained in :ref:`decoding-mode-name`
 
 .. code-block:: python
 
-  {'IM_Red_g-SDSS': -571.4837418709354,
-   'IM_Red_i-SDSS': -802.567783891946,
-   'IM_Red_r-SDSS': -573.8694347173587,
-   'IM_Red_z-SDSS': -1161.5072536268135,
-   'SP_Red_400m1_NOFILTER': -492.0760380190095,
-   'SP_Red_400m2_GG455': -1032.6413206603302}
+  {'IM__Red__g-SDSS': -571.4837418709354,
+   'IM__Red__i-SDSS': -802.567783891946,
+   'IM__Red__r-SDSS': -573.8694347173587,
+   'IM__Red__z-SDSS': -1161.5072536268135,
+   'SP__Red__400m1__NOFILTER': -492.0760380190095,
+   'SP__Red__400m2__GG455': -1032.6413206603302}
 
 
 It is also possible to obtain a plot, from terminal, use ``--plot-results``.
-Below is a repreduction of results obtained  with test data.
+Below is a reproduction of results obtained  with test data.
 
 .. plot::
 
@@ -118,7 +118,7 @@ Below is a repreduction of results obtained  with test data.
   import matplotlib.pyplot as plt
 
   best_focus = -571.483741871
-  mode_name = 'IM_Red_g-SDSS'
+  mode_name = 'IM__Red__g-SDSS'
 
   data = {'file': ['0186_focus_gp.fits',
                    '0187_focus_gp.fits',
@@ -187,21 +187,26 @@ The mode name is different for Imaging and Spectroscopy, since for imaging
 the important settings are the instrument and the filter and for spectroscopy
 the important values come from the instrument, the grating and observing mode and
 filter from second filter wheel. Below, the word inside the parenthesis represents
-a kewyword from the header.
+a keyword from the header.
+
+.. warning::
+  Be aware that the separator string is a ``double underscore``. This change
+  was necessary to avoid confusion with single underscores used in certain
+  keyword values.
 
 For imaging:
 
-  ``IM_(INSTCONF)_(FILTER)``
+  ``IM__(INSTCONF)__(FILTER)``
 
 for example:
 
-  ``IM_Red_g-SDSS``
+  ``IM__Red__g-SDSS``
 
 For spectroscopy:
 
-  ``SP_(INSTCONF)_(WAVMODE)_(FILTER2)``
+  ``SP__(INSTCONF)__(WAVMODE)__(FILTER2)``
 
 
 for example:
 
-  ``SP_Red_400m2_GG455``
+  ``SP__Red__400m2__GG455``
