@@ -128,14 +128,14 @@ def get_peaks(ccd, file_name='', plots=False):
 
 
     if len(peaks) == 1:
-        log.debug("Found {} peak in file".format(len(peaks)))
+        log.debug(f"Found {len(peaks)} peak in file")
     else:
-        log.debug("Found {} peaks in file".format(len(peaks)))
+        log.debug(f"Found {len(peaks)} peaks in file")
 
     values = np.array([profile[int(index)] for index in peaks])
 
     if plots:   # pragma: no cover
-        plt.title("{} {}".format(file_name, np.mean(clipped_profile)))
+        plt.title(f"{file_name} {np.mean(clipped_profile)}")
         plt.axhline(0, color='k')
         plt.plot(x_axis, raw_profile, label='Raw Profile')
         plt.plot(x_axis, clipped_profile)
@@ -187,21 +187,14 @@ def get_fwhm(peaks, values, x_axis, profile, model, sigma=3, maxiter=3):
             model.mean.value = peaks[peak_index]
             # TODO (simon): stddev should be estimated based on binning and slit size
             model.stddev.value = 5
-            log.debug(
-                "Fitting {} with amplitude={}, mean={}, stddev={}".format(
-                    model.__class__.name,
-                    model.amplitude.value,
-                    model.mean.value,
-                    model.stddev.value))
+            log.debug(f"Fitting {model.__class__.name} with amplitude={model.amplitude.value}, "
+                      f"mean={model.mean.value}, stddev={model.stddev.value}")
 
         elif model.__class__.name == 'Moffat1D':
             model.amplitude.value = values[peak_index]
             model.x_0.value = peaks[peak_index]
             log.debug(
-                "Fitting {} with amplitude={}, x_0={}".format(
-                    model.__class__.name,
-                    model.amplitude.value,
-                    model.x_0.value))
+                f"Fitting {model.__class__.name} with amplitude={model.amplitude.value}, x_0={model.x_0.value}")
 
         model = fitter(model,
                        x_axis,
@@ -211,29 +204,29 @@ def get_fwhm(peaks, values, x_axis, profile, model, sigma=3, maxiter=3):
             all_fwhm.append(model.fwhm)
 
     if len(all_fwhm) == 1:
-        log.info("Returning single FWHM value: {}".format(all_fwhm[0]))
+        log.info(f"Returning single FWHM value: {all_fwhm[0]}")
         return all_fwhm[0]
     else:
-        log.info("Applying sigma clipping to collected FWHM values."
-                 " SIGMA: 3, ITERATIONS: 2")
+        log.info(f"Applying sigma clipping to collected FWHM values."
+                 f" SIGMA: {sigma}, ITERATIONS: {maxiter}")
         clipped_fwhm = sigma_clip(all_fwhm, sigma=sigma, maxiters=maxiter)
 
         if np.ma.is_masked(clipped_fwhm):
             cleaned_fwhm = clipped_fwhm[~clipped_fwhm.mask]
             removed_fwhm = clipped_fwhm[clipped_fwhm.mask]
-            log.info("Discarded {} FWHM values".format(len(removed_fwhm)))
+            log.info(f"Discarded {len(removed_fwhm)} FWHM values")
             for _value in removed_fwhm.data:
-                log.debug("FWHM {} discarded".format(_value))
+                log.debug(f"FWHM {_value} discarded")
         else:
             log.debug("No FWHM value was discarded.")
             cleaned_fwhm = clipped_fwhm
 
         if len(cleaned_fwhm) > 0:
-            log.debug("Remaining FWHM values: {}".format(len(cleaned_fwhm)))
+            log.debug(f"Remaining FWHM values: {len(cleaned_fwhm)}")
             for _value in cleaned_fwhm:
-                log.debug("FWHM value: {}".format(_value))
+                log.debug(f"FWHM value: {_value}")
             mean_fwhm = np.mean(cleaned_fwhm)
-            log.debug("Mean FWHM value {}".format(mean_fwhm))
+            log.debug(f"Mean FWHM value {mean_fwhm}")
             return mean_fwhm
         else:
             log.error("Unable to obtain usable FWHM value")
@@ -306,9 +299,7 @@ class GoodmanFocus(object):
                 sys.exit(0)
 
             elif not glob.glob(os.path.join(self.full_path, self.file_pattern)):
-                self.log.critical('Directory {} does not containe files '
-                                  'matching the pattern {}'
-                                  ''.format(self.full_path, self.file_pattern))
+                self.log.critical(f"Directory {self.full_path} does not containe files matching the pattern {self.file_pattern}")
                 sys.exit(0)
 
             _ifc = ImageFileCollection(location=self.full_path,
@@ -316,11 +307,10 @@ class GoodmanFocus(object):
                                        glob_include=self.file_pattern)
 
             self.ifc = _ifc.summary.to_pandas()
-            self.log.debug("Found {} FITS files".format(self.ifc.shape[0]))
+            self.log.debug(f"Found {self.ifc.shape[0]} FITS files")
             self.ifc = self.ifc[(self.ifc['OBSTYPE'] == self.obstype)]
             if self.ifc.shape[0] != 0:
-                self.log.debug("Found {} FITS files with OBSTYPE = FOCUS".format(
-                    self.ifc.shape[0]))
+                self.log.debug(f"Found { self.ifc.shape[0]} FITS files with OBSTYPE = FOCUS")
 
                 self.focus_groups = []
                 configs = self.ifc.groupby(['CAM_TARG',
@@ -363,8 +353,7 @@ class GoodmanFocus(object):
                 if not all([_file in full_path_content for _file in files]):
                     files_dont_exist = [_file for _file in files if _file not in full_path_content]
                     for _file in files_dont_exist:
-                        self.log.critical("File {} does not exist in {}"
-                                          "".format(_file, self.full_path))
+                        self.log.critical(f"File {_file} does not exist in {self.full_path}")
                     sys.exit(0)
                 else:
                     data = {'file': files}
@@ -403,9 +392,7 @@ class GoodmanFocus(object):
 
                 ax.plot(focus_list, fwhm_list, marker='x', label='Measured FWHM')
                 ax.axvline(self.__best_focus, color='k', label='Best Focus')
-                ax.set_title("Best Focus:\n{} {:.3f}".format(
-                    mode_name,
-                    self.__best_focus))
+                ax.set_title(f"Best Focus:\n{mode_name} {self.__best_focus:.3f}")
                 ax.set_xlabel("Focus Value")
                 if 'IM_' in mode_name:
                     ax.set_ylabel("FWHM")
