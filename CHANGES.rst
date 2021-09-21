@@ -1,3 +1,11 @@
+.. _v2.0.0:
+
+2.0.0 Unreleased
+================
+
+- Added FWHM, Best image and data to results.
+- Bumped version one major step due to the change on the format of the results.
+
 .. _v1.0.0:
 
 1.0.0

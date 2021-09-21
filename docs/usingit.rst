@@ -36,7 +36,7 @@ Using it as a library
 After installing :ref:`Installing with PIP` you can also import the class and instantiate it
 providing a set of arguments and values or using default ones.
 
-  ``from goodman_focus.goodman_focus import GoodmanFocus``
+  ``from goodman_focus import GoodmanFocus``
 
 If no argument is provided it will instantiate with the default values.
 
@@ -45,7 +45,7 @@ The list of arguments can be defined as follow:
 .. code-block:: python
 
    import os
-   from goodman_focus.goodman_focus import GoodmanFocus
+   from goodman_focus import GoodmanFocus
 
    goodman_focus = GoodmanFocus(data_path=os.getcwd(),
                                 file_pattern='*.fits',
@@ -59,7 +59,7 @@ Which is equivalent to:
 
 .. code-block:: python
 
-  from goodman_focus.goodman_focus import GoodmanFocus
+  from goodman_focus import GoodmanFocus
 
   goodman_focus = GoodmanFocus()
 
@@ -75,7 +75,7 @@ Finally you need to call the instance, here is a full example.
 
 .. code-block:: python
 
-  from goodman_focus.goodman_focus import GoodmanFocus
+  from goodman_focus import GoodmanFocus
 
   goodman_focus = GoodmanFocus()
 
@@ -90,7 +90,8 @@ Interpreting Results
 
 The terminal version will print a message like this
 
-  ``[17:16:06][INFO]: Best Focus for mode SP__Red__400m2__GG455 is -1032.6413206603302``
+  ``Mode: IM__Red__VR Best Focus: -682.2891445722862 at FWHM: 2.610853168299203``
+  ``Best image: 0019_IM_FOCUS_VR-02-11-2019.fits with focus: -601 and FWHM: 2.618208314784383``
 
 
 Using it as a library will return a dictionary with the following values.
@@ -100,12 +101,232 @@ explained in :ref:`decoding-mode-name`
 
 .. code-block:: python
 
-  {'IM__Red__g-SDSS': -571.4837418709354,
-   'IM__Red__i-SDSS': -802.567783891946,
-   'IM__Red__r-SDSS': -573.8694347173587,
-   'IM__Red__z-SDSS': -1161.5072536268135,
-   'SP__Red__400m1__NOFILTER': -492.0760380190095,
-   'SP__Red__400m2__GG455': -1032.6413206603302}
+  {
+    "IM__Red__VR": {
+        "focus": -682.2891445722862,
+        "fwhm": 2.610853168299203,
+        "best_image": {
+            "file_name": "0019_IM_FOCUS_VR-02-11-2019.fits",
+            "focus": -601,
+            "fwhm": 2.618208314784383
+        },
+        "data": {
+            "focus": [
+                -1994,
+                -1800,
+                -1596,
+                -1400,
+                -1196,
+                -1001,
+                -801,
+                -601,
+                -400,
+                -200,
+                0
+            ],
+            "fwhm": [
+                6.563725199766027,
+                6.06385739315605,
+                5.247499967673857,
+                4.1285040906260795,
+                3.4365641352223735,
+                2.8936984023341568,
+                2.668879483788302,
+                2.618208314784383,
+                2.775636169723414,
+                3.17285749377152,
+                3.801357666832794
+            ]
+        }
+    },
+    "IM__Red__g-SDSS": {
+        "focus": -610.1660830415208,
+        "fwhm": 1311.116741905355,
+        "best_image": {
+            "file_name": "0052_IM_FOCUS_g-SDSS-02-11-2019.fits",
+            "focus": -598,
+            "fwhm": 2.649933307696907
+        },
+        "data": {
+            "focus": [
+                -1994,
+                -1797,
+                -1596,
+                -1400,
+                -1200,
+                -1001,
+                -797,
+                -598,
+                -400,
+                -200,
+                -1
+            ],
+            "fwhm": [
+                10078.568462134408,
+                14587.248215453463,
+                6.974615754441357,
+                4.428741442419154,
+                3.6944352732876298,
+                3.092146915821145,
+                2.7623838554169677,
+                2.649933307696907,
+                2.6830053487148295,
+                3.0344538985884117,
+                3.553276899775066
+            ]
+        }
+    },
+    "IM__Red__i-SDSS": {
+        "focus": -872.8114057028515,
+        "fwhm": 2.5457563308537052,
+        "best_image": {
+            "file_name": "0073_IM_FOCUS_i-SDSS-02-11-2019.fits",
+            "focus": -800,
+            "fwhm": 2.596132528556466
+        },
+        "data": {
+            "focus": [
+                -1994,
+                -1800,
+                -1596,
+                -1401,
+                -1199,
+                -1002,
+                -800,
+                -598,
+                -401,
+                -201,
+                0
+            ],
+            "fwhm": [
+                5.560966902190007,
+                5.065376071655364,
+                4.2934521685265805,
+                3.3798003916603085,
+                2.9000458070451853,
+                2.6576241265555054,
+                2.596132528556466,
+                2.7013565671983684,
+                3.0816052837728094,
+                3.7515817806764415,
+                4.482803504246921
+            ]
+        }
+    },
+    "IM__Red__r-SDSS": {
+        "focus": -700.8929464732366,
+        "fwhm": 2.6124472728412464,
+        "best_image": {
+            "file_name": "0063_IM_FOCUS_r-SDSS-02-11-2019.fits",
+            "focus": -601,
+            "fwhm": 2.619190100387657
+        },
+        "data": {
+            "focus": [
+                -1994,
+                -1800,
+                -1600,
+                -1400,
+                -1201,
+                -1000,
+                -801,
+                -601,
+                -398,
+                -201,
+                -1
+            ],
+            "fwhm": [
+                6.418236632070858,
+                5.904228575760692,
+                5.096126122303206,
+                4.028043010850983,
+                3.3633679109213865,
+                2.8831227979791145,
+                2.6663294197543594,
+                2.619190100387657,
+                2.7851502401449557,
+                3.242542204364083,
+                3.854389127313035
+            ]
+        }
+    },
+    "SP__Red__400_M1__NO_FILTER": {
+        "focus": -486.02551275637825,
+        "fwhm": 2.782866546867474,
+        "best_image": {
+            "file_name": "0009_SP_FOCUS_400_M1_NO_FILTER-02-11-2019.fits",
+            "focus": -401,
+            "fwhm": 2.8119415184081067
+        },
+        "data": {
+            "focus": [
+                -1995,
+                -1800,
+                -1600,
+                -1401,
+                -1201,
+                -1001,
+                -801,
+                -598,
+                -401,
+                -200,
+                0
+            ],
+            "fwhm": [
+                8.391326305891555,
+                7.730900155895203,
+                6.806632962497317,
+                5.4746963164198945,
+                4.3902839723521785,
+                3.6983380943571507,
+                3.0500620739865028,
+                2.816038012437021,
+                2.8119415184081067,
+                2.9933712434094644,
+                3.419879429910512
+            ]
+        }
+    },
+    "SP__Red__400_M2__GG455": {
+        "focus": -1044.8574287143572,
+        "fwhm": 2.70924140386515,
+        "best_image": {
+            "file_name": "0028_SP_FOCUS_400_M2_GG455-02-11-2019.fits",
+            "focus": -1001,
+            "fwhm": 2.7868396931440125
+        },
+        "data": {
+            "focus": [
+                -1994,
+                -1800,
+                -1600,
+                -1401,
+                -1201,
+                -1001,
+                -800,
+                -598,
+                -401,
+                -200,
+                -1
+            ],
+            "fwhm": [
+                4.879423755217414,
+                4.490050876645501,
+                3.7633687417096096,
+                3.0940502796759786,
+                2.83501045746222,
+                2.7868396931440125,
+                2.9319443117863937,
+                3.3664741439041834,
+                4.09694833758484,
+                5.030560477812672,
+                5.931045259840967
+            ]
+        }
+    }
+  }
+
+
 
 
 It is also possible to obtain a plot, from terminal, use ``--plot-results``.

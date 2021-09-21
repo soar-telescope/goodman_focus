@@ -86,7 +86,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'goodman-focus=goodman_focus.goodman_focus:run_goodman_focus',
+            'goodman-focus=goodman_focus:run_goodman_focus',
         ]
     }
 
