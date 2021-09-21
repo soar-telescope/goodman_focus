@@ -36,7 +36,7 @@ Using it as a library
 After installing :ref:`Installing with PIP` you can also import the class and instantiate it
 providing a set of arguments and values or using default ones.
 
-  ``from goodman_focus.goodman_focus import GoodmanFocus``
+  ``from goodman_focus import GoodmanFocus``
 
 If no argument is provided it will instantiate with the default values.
 
@@ -45,7 +45,7 @@ The list of arguments can be defined as follow:
 .. code-block:: python
 
    import os
-   from goodman_focus.goodman_focus import GoodmanFocus
+   from goodman_focus import GoodmanFocus
 
    goodman_focus = GoodmanFocus(data_path=os.getcwd(),
                                 file_pattern='*.fits',
@@ -59,7 +59,7 @@ Which is equivalent to:
 
 .. code-block:: python
 
-  from goodman_focus.goodman_focus import GoodmanFocus
+  from goodman_focus import GoodmanFocus
 
   goodman_focus = GoodmanFocus()
 
@@ -75,7 +75,7 @@ Finally you need to call the instance, here is a full example.
 
 .. code-block:: python
 
-  from goodman_focus.goodman_focus import GoodmanFocus
+  from goodman_focus import GoodmanFocus
 
   goodman_focus = GoodmanFocus()
 
