@@ -280,6 +280,10 @@ class GoodmanFocus(object):
         self.__ccd = None
         self.file_name = None
         self.__best_focus = None
+        self.__best_fwhm = None
+        self.__best_image = None
+        self.__best_image_focus = None
+        self.__best_image_fwhm = None
         self._fwhm = None
 
         self.polynomial = models.Polynomial1D(degree=5)
@@ -378,10 +382,17 @@ class GoodmanFocus(object):
             focus_dataframe = self.get_focus_data(group=focus_group)
 
             self._fit(df=focus_dataframe)
-            self.log.info("Best Focus for mode {} is {}".format(
-                mode_name,
-                self.__best_focus))
-            results[mode_name] = self.__best_focus
+            self.log.info(f"Best Focus for mode {mode_name} is {self.__best_focus}")
+            results[mode_name] = {'focus': self.__best_focus,
+                                  'fwhm': self.__best_fwhm,
+                                  'best_image': {
+                                      'file_name': self.__best_image,
+                                      'focus': self.__best_image_focus,
+                                      'fwhm': self.__best_image_fwhm},
+                                  'data': {
+                                      'focus': focus_dataframe['focus'].tolist(),
+                                      'fwhm':  focus_dataframe['fwhm'].tolist()}
+                                  }
             if self.plot_results:   # pragma: no cover
 
                 fig, ax = plt.subplots()
@@ -425,11 +436,18 @@ class GoodmanFocus(object):
         """
         focus = df['focus'].tolist()
         fwhm = df['fwhm'].tolist()
-
+        files = df['file'].tolist()
         max_focus = np.max(focus)
         min_focus = np.min(focus)
         self.polynomial = self.fitter(self.polynomial, focus, fwhm)
         self._get_local_minimum(x1=min_focus, x2=max_focus)
+
+        index = np.argmin(np.abs(focus - self.__best_focus))
+
+        self.__best_image = files[index]
+        self.__best_image_focus = focus[index]
+        self.__best_image_fwhm = fwhm[index]
+
         return self.polynomial
 
     def _get_local_minimum(self, x1, x2):
@@ -453,7 +471,9 @@ class GoodmanFocus(object):
         for i in range(len(modeled_data) - 1):
             derivative.append((modeled_data[i+1] - modeled_data[i])/(x_axis[i+1]-x_axis[i]))
 
-        self.__best_focus = x_axis[np.argmin(np.abs(derivative))]
+        index_of_minimum = np.argmin(np.abs(derivative))
+        self.__best_focus = x_axis[index_of_minimum]
+        self.__best_fwhm = modeled_data[index_of_minimum]
 
         return self.__best_focus
 
@@ -511,7 +531,7 @@ class GoodmanFocus(object):
         """
         focus_data = []
         for self.file_name in group.file.tolist():
-            self.log.debug("Processing file: {}".format(self.file_name))
+            self.log.debug(f"Processing file: {self.file_name}")
             self.__ccd = CCDData.read(os.path.join(self.full_path,
                                                    self.file_name),
                                       unit='adu')
@@ -527,17 +547,11 @@ class GoodmanFocus(object):
                                  profile=profile,
                                  model=self.feature_model)
 
-            self.log.info("File: {} Focus: {} FWHM: {}"
-                          "".format(self.file_name,
-                                    self.__ccd.header['CAM_FOC'],
-                                    self.fwhm))
+            self.log.info(f"File: {self.file_name} Focus: {self.__ccd.header['CAM_FOC']} FWHM: {self.fwhm}")
             if self.fwhm:
                 focus_data.append([self.file_name, self.fwhm, self.__ccd.header['CAM_FOC']])
             else:
-                self.log.warning("File: {} FWHM is: {} FOCUS: {}"
-                                 "".format(self.file_name,
-                                           self.fwhm,
-                                           self.__ccd.header['CAM_FOC']))
+                self.log.warning(f"File: {self.file_name} FWHM is: {self.fwhm} FOCUS: {self.__ccd.header['CAM_FOC']}")
 
         focus_data_frame = pandas.DataFrame(
             focus_data,
@@ -575,7 +589,9 @@ def run_goodman_focus(args=None):   # pragma: no cover
     result = goodman_focus()
     log.info("Summary")
     for key in result.keys():
-        log.info("Mode: {} Best Focus: {}".format(key, result[key]))
+        log.info(f"Mode: {key} Best Focus: {result[key]['focus']} at FWHM: {result[key]['fwhm']}. "
+                 f"Best image: {result[key]['best_image']['file_name']} with focus: "
+                 f"{result[key]['best_image']['focus']} and FWHM: {result[key]['best_image']['fwhm']}")
 
 
 if __name__ == '__main__':   # pragma: no cover
