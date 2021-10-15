@@ -1,3 +1,4 @@
+import datetime
 import numpy as np
 import logging
 import pandas
@@ -126,10 +127,15 @@ class GoodmanFocusTests(TestCase):
 
         self.list_of_fwhm = fwhm_model(self.focus_values)
 
+
+
         for i in range(number_of_test_subjects):
+            now = datetime.datetime.now()
             ccd = CCDData(data=np.ones((100, 1000)),
                           meta=fits.Header(),
                           unit='adu')
+            ccd.header['DATE'] = now.strftime("%Y-%m-%d")
+            ccd.header['DATE-OBS'] = now.isoformat()
             ccd.header['instconf'] = 'Red'
             ccd.header['obstype'] = 'FOCUS'
             ccd.header['cam_foc'] = self.focus_values[i]

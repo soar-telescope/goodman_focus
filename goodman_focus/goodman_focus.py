@@ -236,7 +236,9 @@ def get_fwhm(peaks, values, x_axis, profile, model, sigma=3, maxiter=3):
 
 class GoodmanFocus(object):
 
-    keywords = ['INSTCONF',
+    keywords = ['DATE',
+                'DATE-OBS',
+                'INSTCONF',
                 'FOCUS',
                 'CAM_TARG',
                 'GRT_TARG',
@@ -362,7 +364,7 @@ class GoodmanFocus(object):
                 else:
                     data = {'file': files}
 
-                    for key in ['INSTCONF', 'FILTER', 'FILTER2', 'WAVMODE']:
+                    for key in ['DATE', 'DATE-OBS', 'INSTCONF', 'FILTER', 'FILTER2', 'WAVMODE']:
                         key_data = [fits.getval(os.path.join(self.full_path,
                                                              _file), key) for _file in files]
 
@@ -375,7 +377,7 @@ class GoodmanFocus(object):
                 sys.exit(0)
 
 
-        results = {}
+        results = []
         for focus_group in self.focus_groups:
             mode_name = self._get_mode_name(focus_group)
 
@@ -383,16 +385,18 @@ class GoodmanFocus(object):
 
             self._fit(df=focus_dataframe)
             self.log.info(f"Best Focus for mode {mode_name} is {self.__best_focus}")
-            results[mode_name] = {'focus': self.__best_focus,
-                                  'fwhm': self.__best_fwhm,
-                                  'best_image': {
-                                      'file_name': self.__best_image,
-                                      'focus': self.__best_image_focus,
-                                      'fwhm': self.__best_image_fwhm},
-                                  'data': {
-                                      'focus': focus_dataframe['focus'].tolist(),
-                                      'fwhm':  focus_dataframe['fwhm'].tolist()}
-                                  }
+            results.append({'date': focus_group['DATE'].tolist()[0],
+                            'time': focus_group['DATE-OBS'].tolist()[0],
+                            'mode_name': mode_name,
+                            'focus': self.__best_focus,
+                            'fwhm': self.__best_fwhm,
+                            'best_image_name': self.__best_image,
+                            'best_image_focus': self.__best_image_focus,
+                            'best_image_fwhm': self.__best_image_fwhm,
+                            'focus_data': focus_dataframe['focus'].tolist(),
+                            'fwhm_data':  focus_dataframe['fwhm'].tolist()
+                            })
+
             if self.plot_results:   # pragma: no cover
 
                 fig, ax = plt.subplots()

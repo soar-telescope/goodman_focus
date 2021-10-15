@@ -5,6 +5,8 @@
 
 - Added FWHM, Best image and data to results.
 - Bumped version one major step due to the change on the format of the results.
+- Returned result is a list of dictionaries now.
+
 
 .. _v1.0.0:
 
