@@ -388,11 +388,11 @@ class GoodmanFocus(object):
             results.append({'date': focus_group['DATE'].tolist()[0],
                             'time': focus_group['DATE-OBS'].tolist()[0],
                             'mode_name': mode_name,
-                            'focus': self.__best_focus,
-                            'fwhm': self.__best_fwhm,
+                            'focus': round(self.__best_focus, 10),
+                            'fwhm': round(self.__best_fwhm, 10),
                             'best_image_name': self.__best_image,
-                            'best_image_focus': self.__best_image_focus,
-                            'best_image_fwhm': self.__best_image_fwhm,
+                            'best_image_focus': round(self.__best_image_focus, 10),
+                            'best_image_fwhm': round(self.__best_image_fwhm, 10),
                             'focus_data': focus_dataframe['focus'].tolist(),
                             'fwhm_data':  focus_dataframe['fwhm'].tolist()
                             })
