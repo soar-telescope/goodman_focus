@@ -1,11 +1,13 @@
 .. _v2.0.0:
 
-2.0.0 Unreleased
+2.0.0 21-10-2021
 ================
 
 - Added FWHM, Best image and data to results.
 - Bumped version one major step due to the change on the format of the results.
 - Returned result is a list of dictionaries now.
+- Added Date and ISO timestamp as part of the json results.
+- Focus and FWHM are rounded to 10 decimals.
 
 
 .. _v1.0.0:
