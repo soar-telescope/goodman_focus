@@ -12,7 +12,7 @@ Finds the best focus for one or more focus sequences.
 
 # Documentation
 
-All the documentation is maintained in https://goodman.readthedocs.io/projects/focus/en/latest/
+All the documentation is maintained in https://soardocs.readthedocs.io/projects/focus/en/latest/
 
 # Found a problem?
 
