@@ -1,5 +1,6 @@
 import argparse
 import glob
+import json
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -12,6 +13,7 @@ from astropy.stats import sigma_clip
 from astropy.modeling import models, fitting, Model
 from ccdproc import CCDData
 from ccdproc import ImageFileCollection
+from scipy import optimize
 from scipy import signal
 
 import logging
@@ -136,23 +138,23 @@ def get_peaks(ccd, file_name='', plots=False):
 
     if plots:   # pragma: no cover
         plt.title(f"{file_name} {np.mean(clipped_profile)}")
-        plt.axhline(0, color='k')
+        plt.axhline(0, color='k', label='Zero')
         plt.plot(x_axis, raw_profile, label='Raw Profile')
-        plt.plot(x_axis, clipped_profile)
+        plt.plot(x_axis, clipped_profile, label='Clipped Profile')
         plt.plot(x_axis, background_model(x_axis),
-                 label='Background Level')
+                 label='Background Model')
         plt.plot(x_axis, fitted_background(x_axis), label='Background Level')
-        # plt.plot(x_axis, profile, label='Background Subtracted Profile')
+        plt.plot(x_axis, profile, label='Background Subtracted Profile')
         # plt.plot(x_axis, filtered_data, label="Filtered Data")
-        # for _peak in peaks:
-        #     plt.axvline(_peak, color='k', alpha=0.6)
+        for _peak in peaks:
+            plt.axvline(_peak, color='k', alpha=0.6)
         plt.legend(loc='best')
         plt.show()
 
     return peaks, values, x_axis, profile
 
 
-def get_fwhm(peaks, values, x_axis, profile, model, sigma=3, maxiter=3):
+def get_fwhm(peaks, values, x_axis, profile, model, sigma=1, maxiter=3):
     """Finds FWHM for an image by fitting a model
 
     For Imaging there is only one peak (the slit itself) but for spectroscopy
@@ -457,8 +459,8 @@ class GoodmanFocus(object):
     def _get_local_minimum(self, x1, x2):
         """Finds best focus
 
-        By calculating a pseudo-derivative of the fitted model to the focus
-        values. The best focus is when the FWHM is minumum.
+        Using scipy.optimize.brent method that uses an inverse parabolic algorithm.
+        The best focus is when the FWHM is minumum.
 
         Args:
             x1 (float): Minimum measured focus value.
@@ -471,13 +473,11 @@ class GoodmanFocus(object):
         """
         x_axis = np.linspace(x1, x2, 2000)
         modeled_data = self.polynomial(x_axis)
-        derivative = []
-        for i in range(len(modeled_data) - 1):
-            derivative.append((modeled_data[i+1] - modeled_data[i])/(x_axis[i+1]-x_axis[i]))
+        index_of_minimum = np.argmin(modeled_data)
+        middle_point = x_axis[index_of_minimum]
 
-        index_of_minimum = np.argmin(np.abs(derivative))
-        self.__best_focus = x_axis[index_of_minimum]
-        self.__best_fwhm = modeled_data[index_of_minimum]
+        self.__best_focus = optimize.brent(self.polynomial, brack=(x1, middle_point, x2))
+        self.__best_fwhm = self.polynomial(self.__best_focus)
 
         return self.__best_focus
 
@@ -590,12 +590,15 @@ def run_goodman_focus(args=None):   # pragma: no cover
                                  plot_results=args.plot_results,
                                  debug=args.debug)
 
-    result = goodman_focus()
+    results = goodman_focus()
+    print(results)
     log.info("Summary")
-    for key in result.keys():
-        log.info(f"Mode: {key} Best Focus: {result[key]['focus']} at FWHM: {result[key]['fwhm']}. "
-                 f"Best image: {result[key]['best_image']['file_name']} with focus: "
-                 f"{result[key]['best_image']['focus']} and FWHM: {result[key]['best_image']['fwhm']}")
+    for result in results:
+        print(json.dumps(result, indent=4))
+        for key in result.keys():
+            log.info(f"Mode: {key} Best Focus: {result[key]['focus']} at FWHM: {result[key]['fwhm']}. "
+                     f"Best image: {result[key]['best_image']['file_name']} with focus: "
+                     f"{result[key]['best_image']['focus']} and FWHM: {result[key]['best_image']['fwhm']}")
 
 
 if __name__ == '__main__':   # pragma: no cover
