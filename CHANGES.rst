@@ -1,3 +1,11 @@
+.. _v2.0.1:
+
+2.0.1 23-02-2022
+================
+
+- Changed method of getting the best focus to scipy.optimize.brent
+- Fixed bug regarding results report on terminal entry point
+
 .. _v2.0.0:
 
 2.0.0 21-10-2021
