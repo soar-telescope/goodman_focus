@@ -6,13 +6,12 @@ import os
 
 from astropy.io import fits
 from astropy.modeling import models
-from unittest import TestCase, skip
+from unittest import TestCase
 from ccdproc import CCDData
 
 from ..goodman_focus import GoodmanFocus
 from ..goodman_focus import get_args, get_peaks, get_fwhm
 
-import matplotlib.pyplot as plt
 
 logging.disable(logging.CRITICAL)
 
@@ -109,13 +108,9 @@ class GetPeaksTest(TestCase):
 class GoodmanFocusTests(TestCase):
 
     def setUp(self):
-        arguments = ['--data-path', os.getcwd(),
-                     '--file-pattern', '*.fits',
-                     '--obstype', 'FOCUS',
-                     '--features-model', 'gaussian']
 
         number_of_test_subjects = 21
-        self.file_list = ["file_{}.fits".format(i+1) for i in range(number_of_test_subjects)]
+        self.file_list = ["file_{}.fits".format(i + 1) for i in range(number_of_test_subjects)]
         self.focus_values = list(np.linspace(-2000, 2000, number_of_test_subjects))
         fwhm_model = models.Polynomial1D(degree=5)
         fwhm_model.c0.value = 5
@@ -126,8 +121,6 @@ class GoodmanFocusTests(TestCase):
         # fwhm_model.c5.value = 1e-6
 
         self.list_of_fwhm = fwhm_model(self.focus_values)
-
-
 
         for i in range(number_of_test_subjects):
             now = datetime.datetime.now()
@@ -153,7 +146,7 @@ class GoodmanFocusTests(TestCase):
             gaussian = models.Gaussian1D(
                 mean=500,
                 amplitude=600,
-                stddev=self.list_of_fwhm[i]/2.35482004503)
+                stddev=self.list_of_fwhm[i] / 2.35482004503)
 
             for e in range(100):
                 ccd.data[e] = gaussian(range(1000))
@@ -183,10 +176,8 @@ class GoodmanFocusTests(TestCase):
                                              self.list_of_fwhm)
 
     def test__fit(self):
-        result = self.goodman_focus._fit(df=self.focus_data_frame)
-
-
-        self.assertIsInstance(result, models.Polynomial1D)
+        self.goodman_focus._fit(df=self.focus_data_frame)
+        self.assertIsInstance(self.goodman_focus.polynomial, models.Polynomial1D)
 
     def test__call__(self):
         self.goodman_focus()
@@ -199,7 +190,7 @@ class GoodmanFocusTests(TestCase):
 
     def test__call__with_list(self):
         self.assertIsNone(self.goodman_focus.fwhm)
-        result = self.goodman_focus(files=self.file_list)
+        self.goodman_focus(files=self.file_list)
         self.assertIsNotNone(self.goodman_focus.fwhm)
 
     def test__call__list_file_no_exist(self):
@@ -224,7 +215,6 @@ class SpectroscopicModeNameTests(TestCase):
                      'FILTER2': ['NO FILTER'] * 5,
                      'WAVMODE': ['IMAGING'] * 5}
 
-
     def test_imaging_mode(self):
         df = pandas.DataFrame(self.data)
         expected_name = 'IM__Blue__FILTER-X'
@@ -240,7 +230,6 @@ class SpectroscopicModeNameTests(TestCase):
         mode_name = GoodmanFocus._get_mode_name(group=df)
 
         self.assertEqual(mode_name, expected_name)
-
 
 
 class DirectoryAndFilesTest(TestCase):
@@ -268,7 +257,7 @@ class DirectoryAndFilesTest(TestCase):
 
             ccd.write(os.path.join(os.getcwd(),
                                    'test_dir_no_focus',
-                                   'file_{}.fits'.format(i+1)))
+                                   'file_{}.fits'.format(i + 1)))
 
     def test_directory_does_not_exists(self):
 

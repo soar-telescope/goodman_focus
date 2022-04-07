@@ -10,7 +10,7 @@ import sys
 
 from astropy.io import fits
 from astropy.stats import sigma_clip
-from astropy.modeling import models, fitting, Model
+from astropy.modeling import models, fitting
 from ccdproc import CCDData
 from ccdproc import ImageFileCollection
 from scipy import optimize
@@ -104,8 +104,6 @@ def get_peaks(ccd, file_name='', plots=False):
 
     clipped_profile = sigma_clip(raw_profile, sigma=1, maxiters=5)
 
-    _mean = np.mean(clipped_profile)
-
     clipped_x_axis = [i for i in range(len(clipped_profile)) if not clipped_profile.mask[i]]
     cleaned_profile = clipped_profile[~clipped_profile.mask]
 
@@ -127,7 +125,6 @@ def get_peaks(ccd, file_name='', plots=False):
         [0 if it is None else it for it in filtered_data])
 
     peaks = signal.argrelmax(filtered_data, axis=0, order=5)[0]
-
 
     if len(peaks) == 1:
         log.debug(f"Found {len(peaks)} peak in file")
@@ -378,7 +375,6 @@ class GoodmanFocus(object):
                 self.log.critical('"files" argument must be a list')
                 sys.exit(0)
 
-
         results = []
         for focus_group in self.focus_groups:
             mode_name = self._get_mode_name(focus_group)
@@ -540,7 +536,7 @@ class GoodmanFocus(object):
                                                    self.file_name),
                                       unit='adu')
 
-            peaks, values, x_axis,  profile = get_peaks(
+            peaks, values, x_axis, profile = get_peaks(
                 ccd=self.__ccd,
                 file_name=self.file_name,
                 plots=self.debug)
