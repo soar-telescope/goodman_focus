@@ -280,6 +280,9 @@ class GoodmanFocus(object):
 
         self.__ccd = None
         self.file_name = None
+        self.__focus = None
+        self.__fwhm = None
+        self.__files = None
         self.__best_focus = None
         self.__best_fwhm = None
         self.__best_image = None
@@ -378,43 +381,45 @@ class GoodmanFocus(object):
         results = []
         for focus_group in self.focus_groups:
             mode_name = self._get_mode_name(focus_group)
+            try:
+                focus_dataframe = self.get_focus_data(group=focus_group)
 
-            focus_dataframe = self.get_focus_data(group=focus_group)
+                self._fit(df=focus_dataframe)
+                self.log.info(f"Best Focus for mode {mode_name} is {self.__best_focus}")
+                results.append({'date': focus_group['DATE'].tolist()[0],
+                                'time': focus_group['DATE-OBS'].tolist()[0],
+                                'mode_name': mode_name,
+                                'focus': round(self.__best_focus, 10),
+                                'fwhm': round(self.__best_fwhm, 10),
+                                'best_image_name': self.__best_image,
+                                'best_image_focus': round(self.__best_image_focus, 10),
+                                'best_image_fwhm': round(self.__best_image_fwhm, 10),
+                                'focus_data': focus_dataframe['focus'].tolist(),
+                                'fwhm_data': focus_dataframe['fwhm'].tolist()
+                                })
 
-            self._fit(df=focus_dataframe)
-            self.log.info(f"Best Focus for mode {mode_name} is {self.__best_focus}")
-            results.append({'date': focus_group['DATE'].tolist()[0],
-                            'time': focus_group['DATE-OBS'].tolist()[0],
-                            'mode_name': mode_name,
-                            'focus': round(self.__best_focus, 10),
-                            'fwhm': round(self.__best_fwhm, 10),
-                            'best_image_name': self.__best_image,
-                            'best_image_focus': round(self.__best_image_focus, 10),
-                            'best_image_fwhm': round(self.__best_image_fwhm, 10),
-                            'focus_data': focus_dataframe['focus'].tolist(),
-                            'fwhm_data':  focus_dataframe['fwhm'].tolist()
-                            })
+                if self.plot_results:   # pragma: no cover
 
-            if self.plot_results:   # pragma: no cover
+                    fig, ax = plt.subplots()
 
-                fig, ax = plt.subplots()
+                    focus_list = focus_dataframe['focus'].tolist()
+                    fwhm_list = focus_dataframe['fwhm'].tolist()
+                    new_x_axis = np.linspace(focus_list[0], focus_list[-1], 1000)
 
-                focus_list = focus_dataframe['focus'].tolist()
-                fwhm_list = focus_dataframe['fwhm'].tolist()
-                new_x_axis = np.linspace(focus_list[0], focus_list[-1], 1000)
-
-                ax.plot(focus_list, fwhm_list, marker='x', label='Measured FWHM')
-                ax.axvline(self.__best_focus, color='k', label='Best Focus')
-                ax.set_title(f"Best Focus:\n{mode_name} {self.__best_focus:.3f}")
-                ax.set_xlabel("Focus Value")
-                if 'IM_' in mode_name:
-                    ax.set_ylabel("FWHM")
-                else:
-                    ax.set_ylabel("Mean FWHM")
-                ax.plot(new_x_axis,
-                        self.polynomial(new_x_axis), label='Model')
-                ax.legend(loc='best')
-                plt.show()
+                    ax.plot(focus_list, fwhm_list, marker='x', label='Measured FWHM')
+                    ax.axvline(self.__best_focus, color='k', label='Best Focus')
+                    ax.set_title(f"Best Focus:\n{mode_name} {self.__best_focus:.3f}")
+                    ax.set_xlabel("Focus Value")
+                    if 'IM_' in mode_name:
+                        ax.set_ylabel("FWHM")
+                    else:
+                        ax.set_ylabel("Mean FWHM")
+                    ax.plot(new_x_axis,
+                            self.polynomial(new_x_axis), label='Model')
+                    ax.legend(loc='best')
+                    plt.show()
+            except ValueError as error:
+                self.log.error(f"Unable to obtain focus due to ValueError: {str(error)}", exc_info=True)
 
         return results
 
@@ -436,23 +441,29 @@ class GoodmanFocus(object):
         Returns:
 
         """
-        focus = df['focus'].tolist()
-        fwhm = df['fwhm'].tolist()
-        files = df['file'].tolist()
-        max_focus = np.max(focus)
-        min_focus = np.min(focus)
-        self.polynomial = self.fitter(self.polynomial, focus, fwhm)
-        self._get_local_minimum(x1=min_focus, x2=max_focus)
+        self.__focus = df['focus'].tolist()
+        self.__fwhm = df['fwhm'].tolist()
+        self.__files = df['file'].tolist()
+        max_focus = np.max(self.__focus)
+        min_focus = np.min(self.__focus)
+        self.polynomial = self.fitter(self.polynomial, self.__focus, self.__fwhm)
+        try:
+            self._get_local_minimum(x1=min_focus, x2=max_focus)
+        except ValueError as error:
+            self.log.error(f"Error finding local minimum with fitted data: {str(error)}")
+            lowest_fwhm_index = np.argmin(self.__fwhm)
+            self.__best_focus = self.__focus[lowest_fwhm_index]
+            self.__best_fwhm = self.__fwhm[lowest_fwhm_index]
 
-        index = np.argmin(np.abs(focus - self.__best_focus))
+        index = np.argmin(np.abs(np.array(self.__focus) - self.__best_focus))
 
-        self.__best_image = files[index]
-        self.__best_image_focus = focus[index]
-        self.__best_image_fwhm = fwhm[index]
+        self.__best_image = self.__files[index]
+        self.__best_image_focus = self.__focus[index]
+        self.__best_image_fwhm = self.__fwhm[index]
 
         return self.polynomial
 
-    def _get_local_minimum(self, x1, x2):
+    def _get_local_minimum(self, x1, x2, x_axis_size=2000):
         """Finds best focus
 
         Using scipy.optimize.brent method that uses an inverse parabolic algorithm.
@@ -467,7 +478,7 @@ class GoodmanFocus(object):
             values (i.e. closest to zero).
 
         """
-        x_axis = np.linspace(x1, x2, 2000)
+        x_axis = np.linspace(x1, x2, x_axis_size)
         modeled_data = self.polynomial(x_axis)
         index_of_minimum = np.argmin(modeled_data)
         middle_point = x_axis[index_of_minimum]
@@ -587,14 +598,9 @@ def run_goodman_focus(args=None):   # pragma: no cover
                                  debug=args.debug)
 
     results = goodman_focus()
-    print(results)
     log.info("Summary")
     for result in results:
-        print(json.dumps(result, indent=4))
-        for key in result.keys():
-            log.info(f"Mode: {key} Best Focus: {result[key]['focus']} at FWHM: {result[key]['fwhm']}. "
-                     f"Best image: {result[key]['best_image']['file_name']} with focus: "
-                     f"{result[key]['best_image']['focus']} and FWHM: {result[key]['best_image']['fwhm']}")
+        log.info(json.dumps(result, indent=4))
 
 
 if __name__ == '__main__':   # pragma: no cover
