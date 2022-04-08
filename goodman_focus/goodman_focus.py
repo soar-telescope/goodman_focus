@@ -289,6 +289,7 @@ class GoodmanFocus(object):
         self.__best_image_focus = None
         self.__best_image_fwhm = None
         self._fwhm = None
+        self.__notes = ''
 
         self.polynomial = models.Polynomial1D(degree=5)
         self.fitter = fitting.LevMarLSQFitter()
@@ -381,6 +382,7 @@ class GoodmanFocus(object):
         results = []
         for focus_group in self.focus_groups:
             mode_name = self._get_mode_name(focus_group)
+            self.notes = ''
             try:
                 focus_dataframe = self.get_focus_data(group=focus_group)
 
@@ -389,6 +391,7 @@ class GoodmanFocus(object):
                 results.append({'date': focus_group['DATE'].tolist()[0],
                                 'time': focus_group['DATE-OBS'].tolist()[0],
                                 'mode_name': mode_name,
+                                'notes': self.notes,
                                 'focus': round(self.__best_focus, 10),
                                 'fwhm': round(self.__best_fwhm, 10),
                                 'best_image_name': self.__best_image,
@@ -449,8 +452,11 @@ class GoodmanFocus(object):
         self.polynomial = self.fitter(self.polynomial, self.__focus, self.__fwhm)
         try:
             self._get_local_minimum(x1=min_focus, x2=max_focus)
+            self.notes = f"Focus obtained by using Brent's optimization method."
         except ValueError as error:
             self.log.error(f"Error finding local minimum with fitted data: {str(error)}")
+            self.log.warning(f"This method does not guarantee this is the best focus for this setup.")
+            self.notes = f"Warning: This result does not guarantee this is the best focus."
             lowest_fwhm_index = np.argmin(self.__fwhm)
             self.__best_focus = self.__focus[lowest_fwhm_index]
             self.__best_fwhm = self.__fwhm[lowest_fwhm_index]
