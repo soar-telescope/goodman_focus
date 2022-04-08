@@ -1,3 +1,12 @@
+.. _v2.0.2:
+
+2.0.2 08-04-2022
+================
+
+- Added exception handling for when it's not possible to use scipy.optimize.brent
+- Added notes field to report special warnings.
+
+
 .. _v2.0.1:
 
 2.0.1 23-02-2022
