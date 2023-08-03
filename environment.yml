@@ -10,6 +10,6 @@ dependencies:
   - pip:
       - ccdproc
       - coveralls
-      - sphinx_rtd_theme
+      - pydata-sphinx-theme
       - sphinx
       - sphinxcontrib.napoleon
