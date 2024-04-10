@@ -73,7 +73,31 @@ def get_args(arguments=None):
     return args
 
 
-def get_peaks(ccd, file_name='', plots=False):
+def clean_clipped_profile(clipped_profile: np.ma.MaskedArray):
+    """Helper function to reduce code duplicity
+
+    Creates a new x-axis for the values not masked, and also it creates the profile without the
+    masked values.
+    This information is used for fitting the background model for later background subtraction.
+
+    Args:
+        clipped_profile (MaskedArray):  Masked profile to clean.
+
+    Returns:
+        clipped_x_axis and cleaned_profile.
+
+    """
+    clipped_x_axis = np.array([i for i in range(len(clipped_profile)) if not clipped_profile.mask[i]])
+    cleaned_profile = clipped_profile[~clipped_profile.mask]
+
+    return clipped_x_axis, cleaned_profile
+
+
+def get_peaks(ccd: CCDData,
+              file_name: str = '',
+              split_size_for_low_snr_data: int = 10,
+              threshold_for_selecting_peaks: float = 2,
+              plots: bool = False):
     """Identify peaks in an image
 
     For Imaging and Spectroscopy the images obtained for focusing have lines
@@ -82,11 +106,15 @@ def get_peaks(ccd, file_name='', plots=False):
     the detector.
 
     Args:
-        ccd (object): Image to get peaks from
+        ccd (CCDData): Image to get peaks from
         file_name (str): Name of the file used. This is optional and is used
-        only for debugging purposes.
+          only for debugging purposes.
+        split_size_for_low_snr_data (int): When the data has low signal-to-noise ratio is required
+          to split the spectral profile in this number of parts. Default: 10
+        threshold_for_selecting_peaks (float): Factor of spectral profile's standard deviation to
+          discriminate peaks.
         plots (bool): Show plots of the profile, background and
-        background-subtracted profile
+          background-subtracted profile
 
     Returns:
         A list of peak values, peak intensities as well as the x-axis and the
@@ -103,9 +131,19 @@ def get_peaks(ccd, file_name='', plots=False):
     x_axis = np.array(range(len(raw_profile)))
 
     clipped_profile = sigma_clip(raw_profile, sigma=1, maxiters=5)
+    clipped_x_axis, cleaned_profile = clean_clipped_profile(clipped_profile=clipped_profile)
 
-    clipped_x_axis = [i for i in range(len(clipped_profile)) if not clipped_profile.mask[i]]
-    cleaned_profile = clipped_profile[~clipped_profile.mask]
+    percent_of_remaining_profile_points = (len(cleaned_profile) * 100) / len(raw_profile)
+    if percent_of_remaining_profile_points < 20.:
+        log.warning(f"The percentage of remaining points after cleaning. "
+                    f"{percent_of_remaining_profile_points:.2f}% suggests that "
+                    f"this data has low signal to noise ratio.")
+        segmented_clipping = []
+        for sub_section in np.array_split(raw_profile, split_size_for_low_snr_data):
+            clipped_sub_section = sigma_clip(sub_section, sigma_upper=1, maxiters=5)
+            segmented_clipping.append(clipped_sub_section)
+        clipped_profile = np.ma.concatenate(segmented_clipping, axis=0)
+        clipped_x_axis, cleaned_profile = clean_clipped_profile(clipped_profile=clipped_profile)
 
     background_model = models.Linear1D(slope=0,
                                        intercept=np.mean(clipped_profile))
@@ -125,22 +163,30 @@ def get_peaks(ccd, file_name='', plots=False):
         [0 if it is None else it for it in filtered_data])
 
     peaks = signal.argrelmax(filtered_data, axis=0, order=5)[0]
+    log.debug(f"Found {len(peaks)} peaks in file")
 
-    if len(peaks) == 1:
-        log.debug(f"Found {len(peaks)} peak in file")
-    else:
-        log.debug(f"Found {len(peaks)} peaks in file")
+    cleaned_profile_stddev = np.std(profile)
+    log.debug(f"Standard deviation of spectral profile after subtracting "
+              f"background is: {cleaned_profile_stddev}")
+
+    peaks = [i for i in peaks if profile[int(i)] > threshold_for_selecting_peaks * cleaned_profile_stddev]
+    log.debug(f"Peaks below {threshold_for_selecting_peaks * cleaned_profile_stddev} rejected. "
+              f"Update threshold to updated, current value is "
+              f"{threshold_for_selecting_peaks} standard deviation.")
+    log.debug(f"{len(peaks)} peaks remaining after cleaning.")
 
     values = np.array([profile[int(index)] for index in peaks])
 
     if plots:   # pragma: no cover
         plt.title(f"{file_name} {np.mean(clipped_profile)}")
         plt.axhline(0, color='k', label='Zero')
+        plt.axhline(threshold_for_selecting_peaks * cleaned_profile_stddev, color='g',
+                    label=f"{threshold_for_selecting_peaks} Cleaned Profile STD")
         plt.plot(x_axis, raw_profile, label='Raw Profile')
         plt.plot(x_axis, clipped_profile, label='Clipped Profile')
         plt.plot(x_axis, background_model(x_axis),
-                 label='Background Model')
-        plt.plot(x_axis, fitted_background(x_axis), label='Background Level')
+                 label='Initial Background Model')
+        plt.plot(x_axis, fitted_background(x_axis), label='Fitted Background Level')
         plt.plot(x_axis, profile, label='Background Subtracted Profile')
         # plt.plot(x_axis, filtered_data, label="Filtered Data")
         for _peak in peaks:
