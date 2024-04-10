@@ -63,6 +63,12 @@ def get_args(arguments=None):
                         help='Show a plot when it finishes the focus '
                              'calculation')
 
+    parser.add_argument('--selection-threshold',
+                        action='store',
+                        dest='selection_threshold',
+                        help='Threshold as a factor of spectral profile standard deviation '
+                             'after background subtraction.')
+
     parser.add_argument('--debug',
                         action='store_true',
                         dest='debug',
@@ -305,6 +311,7 @@ class GoodmanFocus(object):
                  file_pattern="*.fits",
                  obstype="FOCUS",
                  features_model='gaussian',
+                 selection_threshold=2,
                  plot_results=False,
                  debug=False):
 
@@ -312,6 +319,7 @@ class GoodmanFocus(object):
         self.file_pattern = file_pattern
         self.obstype = obstype
         self.features_model = features_model
+        self.selection_threshold = selection_threshold
         self.plot_results = plot_results
         self.debug = debug
 
@@ -602,6 +610,7 @@ class GoodmanFocus(object):
             peaks, values, x_axis, profile = get_peaks(
                 ccd=self.__ccd,
                 file_name=self.file_name,
+                threshold_for_selecting_peaks=self.selection_threshold,
                 plots=self.debug)
 
             self.fwhm = get_fwhm(peaks=peaks,
