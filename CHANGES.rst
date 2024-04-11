@@ -1,6 +1,6 @@
 .. _v2.0.3
 
-2.0.3 10-04-2022
+2.0.3 11-04-2022
 ================
 
 - Improved background fitting for low signal-to-noise ratio data.
