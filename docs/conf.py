@@ -16,7 +16,8 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-__version__ = __import__('goodman_focus').__version__
+from importlib.metadata import version
+__version__ = version('goodman_focus')
 
 # -- Project information -----------------------------------------------------
 
@@ -43,8 +44,8 @@ release = __version__
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
-    'sphinxcontrib.napoleon',
     'matplotlib.sphinxext.plot_directive',
+    'sphinx.ext.napoleon'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -170,4 +171,4 @@ texinfo_documents = [
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}

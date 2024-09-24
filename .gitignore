@@ -5,3 +5,8 @@ build/*
 *__pycache__*
 *.egg-info/*
 .tox/*
+/coverage.xml
+/.tox/
+/.coverage*
+/goodman_focus/version.py
+.DS_Store
