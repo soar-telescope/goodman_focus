@@ -16,7 +16,8 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-__version__ = __import__('goodman_focus').__version__
+from importlib.metadata import version
+__version__ = version('goodman_focus')
 
 # -- Project information -----------------------------------------------------
 
