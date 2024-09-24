@@ -1,6 +1,6 @@
 name: goodman_focus
 dependencies:
-  - python=3.8
+  - python=3.12
   - astropy
   - matplotlib
   - numpy
