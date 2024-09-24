@@ -44,8 +44,8 @@ release = __version__
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
-    'sphinxcontrib.napoleon',
     'matplotlib.sphinxext.plot_directive',
+    'sphinx.ext.napoleon'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
