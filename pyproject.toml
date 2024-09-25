@@ -65,8 +65,7 @@ dependencies = [
 goodman-focus = "goodman_focus:run_goodman_focus"
 
 [tool.setuptools]
-[tool.setuptools.packages.find]
-where = ["goodman_focus"]
+packages = ["goodman_focus"]
 
 [tool.setuptools_scm]
 version_file = "goodman_focus/version.py"
