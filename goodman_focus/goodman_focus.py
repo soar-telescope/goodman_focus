@@ -639,18 +639,27 @@ def run_goodman_focus(args=None):   # pragma: no cover
         args (list): (optional) a list of arguments and respective values.
 
     """
-    LOG_FORMAT = '[%(asctime)s][%(levelname)s]: %(message)s'
-    LOG_LEVEL = logging.INFO
+    args = get_args(arguments=args)
+    log_level = logging.INFO
+    if args.debug:
+        log_level = logging.DEBUG
 
-    DATE_FORMAT = '%H:%M:%S'
+    log_format = '[%(asctime)s][%(levelname)s]: %(message)s'
+    date_format = '%H:%M:%S'
 
-    logging.basicConfig(level=LOG_LEVEL,
-                        format=LOG_FORMAT,
-                        datefmt=DATE_FORMAT)
+    logging.basicConfig(level=log_level,
+                        format=log_format,
+                        datefmt=date_format)
 
     log = logging.getLogger(__name__)
 
-    args = get_args(arguments=args)
+    file_handler = logging.FileHandler('goodman_focus.log')
+    formatter = logging.Formatter(fmt=log_format, datefmt=date_format)
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(log_level)
+
+    log.addHandler(file_handler)
+
     goodman_focus = GoodmanFocus(data_path=args.data_path,
                                  file_pattern=args.file_pattern,
                                  obstype=args.obstype,
